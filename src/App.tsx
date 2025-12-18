@@ -255,7 +255,7 @@ function App() {
         <div className="max-w-[1600px] mx-auto px-6 h-full flex items-center">
           <div className="flex items-center gap-3">
             <Sparkles className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">切图生成器</h1>
+            <h1 className="text-xl font-bold">AssetScaler</h1>
           </div>
         </div>
       </header>
