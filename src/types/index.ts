@@ -10,7 +10,8 @@ export interface ImageFile {
 
 export interface ConvertConfig {
   inputScale: number // 1, 2, 3, or 4
-  quality: number // 0-100
+  quality: number // 0-100, for lossy: visual quality, for lossless: compression effort
+  lossless: boolean // true for lossless encoding (like AS "Lossless encoding" option)
   selectedDensities: string[] // e.g. ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi', 'drawable']
 }
 

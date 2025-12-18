@@ -26,6 +26,7 @@ export function getDefaultConfig(): ConvertConfig {
   return {
     inputScale: 3,
     quality: 75,
+    lossless: false, // Match AS default: Lossy encoding
     selectedDensities: ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi'], // 默认生成这4个密度
   }
 }

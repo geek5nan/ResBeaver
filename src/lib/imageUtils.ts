@@ -58,18 +58,26 @@ export function resizeImage(
 
 /**
  * Convert canvas to WebP using libwebp WASM (same encoder as cwebp/Android Studio)
+ * @param canvas - The canvas element to convert
+ * @param quality - 0-100, for lossy: visual quality, for lossless: compression effort
+ * @param lossless - true for lossless encoding (like AS "Lossless encoding" option)
  */
 export async function canvasToWebP(
   canvas: HTMLCanvasElement,
-  quality: number
+  quality: number,
+  lossless: boolean = false
 ): Promise<Blob> {
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Failed to get canvas context')
 
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
 
-  // Use libwebp WASM encoder (same as cwebp)
-  const webpBuffer = await encodeWebP(imageData, { quality })
+  // Use libwebp WASM encoder with AS-compatible parameters
+  const webpBuffer = await encodeWebP(imageData, {
+    quality,
+    lossless: lossless ? 1 : 0, // Match AS: 0=lossy, 1=lossless
+    method: 4, // Match AS default compression method (0-6, higher = slower but smaller)
+  })
 
   return new Blob([webpBuffer], { type: 'image/webp' })
 }

@@ -89,7 +89,7 @@ function App() {
                 const width = Math.round(file.width * density.scale)
                 const height = Math.round(file.height * density.scale)
                 const canvas = resizeImage(img, width, height)
-                const webpBlob = await canvasToWebP(canvas, config.quality)
+                const webpBlob = await canvasToWebP(canvas, config.quality, config.lossless)
 
                 const folderName = densityName === 'drawable' ? 'drawable' : `drawable-${densityName}`
                 convertedImages.push({ density: folderName, blob: webpBlob })
@@ -295,36 +295,70 @@ function App() {
               </RadioGroup>
             </div>
 
+            {/* Encoding Mode - Match Android Studio */}
+            <div>
+              <Label className="text-sm font-medium mb-3 block">编码模式</Label>
+              <RadioGroup
+                value={config.lossless ? 'lossless' : 'lossy'}
+                onValueChange={(value) => setConfig(prev => ({ ...prev, lossless: value === 'lossless' }))}
+                className="space-y-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="lossy" id="lossy" />
+                  <Label htmlFor="lossy" className="text-sm cursor-pointer">
+                    Lossy (有损压缩)
+                    <span className="text-xs text-muted-foreground ml-2">文件更小</span>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="lossless" id="lossless" />
+                  <Label htmlFor="lossless" className="text-sm cursor-pointer">
+                    Lossless (无损压缩)
+                    <span className="text-xs text-muted-foreground ml-2">保留原始质量</span>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
             <div className="h-px bg-border" />
 
             {/* Quality */}
             <div>
               <div className="flex justify-between items-center mb-3">
-                <Label className="text-sm font-medium">WebP 质量</Label>
+                <Label className="text-sm font-medium">
+                  {config.lossless ? '压缩力度' : 'WebP 质量'}
+                </Label>
                 <Badge variant="secondary">{config.quality}%</Badge>
               </div>
-              <div className="flex gap-2 mb-3">
-                {[50, 75, 90].map(q => (
-                  <button
-                    key={q}
-                    onClick={() => setConfig(prev => ({ ...prev, quality: q }))}
-                    className={`flex-1 py-1.5 text-xs rounded-md transition-colors ${config.quality === q
-                      ? 'bg-primary text-white'
-                      : 'bg-slate-100 hover:bg-slate-200'
-                      }`}
-                  >
-                    {q === 50 ? '低' : q === 75 ? '中' : '高'}
-                  </button>
-                ))}
-              </div>
+              {!config.lossless && (
+                <div className="flex gap-2 mb-3">
+                  {[50, 75, 90].map(q => (
+                    <button
+                      key={q}
+                      onClick={() => setConfig(prev => ({ ...prev, quality: q }))}
+                      className={`flex-1 py-1.5 text-xs rounded-md transition-colors ${config.quality === q
+                        ? 'bg-primary text-white'
+                        : 'bg-slate-100 hover:bg-slate-200'
+                        }`}
+                    >
+                      {q === 50 ? '低' : q === 75 ? '中' : '高'}
+                    </button>
+                  ))}
+                </div>
+              )}
               <Slider
                 value={[config.quality]}
                 onValueChange={([value]) => setConfig(prev => ({ ...prev, quality: value }))}
                 max={100}
-                min={10}
+                min={config.lossless ? 0 : 10}
                 step={1}
                 className="w-full"
               />
+              {config.lossless && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  0 = 最快压缩，100 = 最小文件
+                </p>
+              )}
             </div>
 
             <div className="h-px bg-border" />
