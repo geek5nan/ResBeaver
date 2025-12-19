@@ -61,6 +61,14 @@ npm run dev
 npm run build
 ```
 
+### Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `VITE_GA_ID` | Google Analytics 4 Measurement ID | No |
+
+To enable Google Analytics, set `VITE_GA_ID` in your deployment platform (e.g., Cloudflare Pages, Vercel).
+
 ## License
 
 MIT
