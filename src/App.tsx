@@ -514,11 +514,6 @@ function App() {
                 ))}
               </div>
             </div>
-
-            {/* Tip */}
-            <div className="p-3 bg-slate-50 rounded-lg">
-              <p className="text-xs text-muted-foreground">💾 设置会自动保存</p>
-            </div>
           </div>
         </aside>
 
