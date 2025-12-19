@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Sparkles, Upload, Download, Trash2, CheckCircle2, Loader2, Pencil, Check } from 'lucide-react'
+import { Sparkles, Upload, Download, Trash2, Loader2, Pencil, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -13,7 +13,6 @@ import { saveConfig, loadConfig, getDefaultConfig } from '@/lib/storage'
 import { createImageFile, resizeImage, canvasToWebP, calculateDensities } from '@/lib/imageUtils'
 import JSZip from 'jszip'
 
-// 存储转换后的图片数据
 interface ConvertedImage {
   density: string
   blob: Blob
@@ -21,12 +20,23 @@ interface ConvertedImage {
 
 // Extended ImageFile with processing state
 interface ProcessingFile extends ImageFile {
-  status: 'ready' | 'processing' | 'done' | 'error'  // ready = uploaded, waiting for download
+  status: 'ready' | 'processing' | 'error'  // ready = can download, processing = converting
   progress: number
-  convertedImages?: ConvertedImage[] // 存储各密度的转换结果
+  convertedImages?: ConvertedImage[]
   error?: string
   outputName: string
   isEditing?: boolean
+}
+
+// Get recommended output densities based on input scale
+function getRecommendedDensities(inputScale: number): string[] {
+  switch (inputScale) {
+    case 1: return ['mdpi', 'hdpi']
+    case 2: return ['mdpi', 'hdpi', 'xhdpi']
+    case 3: return ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi']
+    case 4: return ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi']
+    default: return ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi']
+  }
 }
 
 function App() {
@@ -73,20 +83,81 @@ function App() {
     }
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent | DragEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     setIsDragging(false)
-    handleFileSelect(e.dataTransfer.files)
+    const files = (e as DragEvent).dataTransfer?.files || (e as React.DragEvent).dataTransfer?.files
+    if (files) {
+      handleFileSelect(files)
+    }
   }, [handleFileSelect])
 
+  // Window-level drag events for fullscreen overlay
+  useEffect(() => {
+    let dragCounter = 0
+
+    const handleWindowDragEnter = (e: DragEvent) => {
+      e.preventDefault()
+      dragCounter++
+      if (e.dataTransfer?.types.includes('Files')) {
+        setIsDragging(true)
+      }
+    }
+
+    const handleWindowDragOver = (e: DragEvent) => {
+      e.preventDefault()
+    }
+
+    const handleWindowDragLeave = (e: DragEvent) => {
+      e.preventDefault()
+      dragCounter--
+      // Check if actually left the window (not just entered a child element)
+      if (dragCounter <= 0 ||
+        e.clientX <= 0 || e.clientY <= 0 ||
+        e.clientX >= window.innerWidth || e.clientY >= window.innerHeight) {
+        dragCounter = 0
+        setIsDragging(false)
+      }
+    }
+
+    const handleWindowDrop = (e: DragEvent) => {
+      e.preventDefault()
+      dragCounter = 0
+      setIsDragging(false)
+      if (e.dataTransfer?.files) {
+        handleFileSelect(e.dataTransfer.files)
+      }
+    }
+
+    // Also reset on dragend (when drag is cancelled)
+    const handleDragEnd = () => {
+      dragCounter = 0
+      setIsDragging(false)
+    }
+
+    window.addEventListener('dragenter', handleWindowDragEnter)
+    window.addEventListener('dragover', handleWindowDragOver)
+    window.addEventListener('dragleave', handleWindowDragLeave)
+    window.addEventListener('drop', handleWindowDrop)
+    window.addEventListener('dragend', handleDragEnd)
+
+    return () => {
+      window.removeEventListener('dragenter', handleWindowDragEnter)
+      window.removeEventListener('dragover', handleWindowDragOver)
+      window.removeEventListener('dragleave', handleWindowDragLeave)
+      window.removeEventListener('drop', handleWindowDrop)
+      window.removeEventListener('dragend', handleDragEnd)
+    }
+  }, [handleFileSelect])
+
+  // Keep these for the small drop zone (click to upload)
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    setIsDragging(true)
   }, [])
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    setIsDragging(false)
   }, [])
 
   const removeFile = useCallback((id: string) => {
@@ -117,7 +188,7 @@ function App() {
     ))
   }, [])
 
-  // 下载时先转换（如果还没转换），然后打包 ZIP
+  // Process and download file as ZIP
   const downloadFile = useCallback(async (file: ProcessingFile) => {
     setDownloadingId(file.id)
 
@@ -168,7 +239,7 @@ function App() {
 
       // Update file status to done
       setFiles(prev => prev.map(f =>
-        f.id === file.id ? { ...f, status: 'done' as const, progress: 100 } : f
+        f.id === file.id ? { ...f, status: 'ready' as const, progress: 100 } : f
       ))
 
       // Now generate and download ZIP
@@ -194,11 +265,11 @@ function App() {
   }, [config])
 
   const downloadAll = useCallback(async () => {
-    const readyOrDoneFiles = files.filter(f => f.status === 'ready' || f.status === 'done')
-    if (readyOrDoneFiles.length === 0) return
+    const readyFiles = files.filter(f => f.status === 'ready')
+    if (readyFiles.length === 0) return
 
-    if (readyOrDoneFiles.length === 1) {
-      downloadFile(readyOrDoneFiles[0])
+    if (readyFiles.length === 1) {
+      downloadFile(readyFiles[0])
       return
     }
 
@@ -210,7 +281,7 @@ function App() {
 
       const processedFiles: { file: ProcessingFile; images: ConvertedImage[] }[] = []
 
-      for (const file of readyOrDoneFiles) {
+      for (const file of readyFiles) {
         setFiles(prev => prev.map(f =>
           f.id === file.id ? { ...f, status: 'processing' as const, progress: 0 } : f
         ))
@@ -244,7 +315,7 @@ function App() {
         })
 
         setFiles(prev => prev.map(f =>
-          f.id === file.id ? { ...f, status: 'done' as const, progress: 100 } : f
+          f.id === file.id ? { ...f, status: 'ready' as const, progress: 100 } : f
         ))
 
         processedFiles.push({ file, images: convertedImages })
@@ -274,11 +345,25 @@ function App() {
     setFiles([])
   }, [files])
 
-  const doneCount = files.filter(f => f.status === 'done').length
+  const readyCount = files.filter(f => f.status === 'ready').length
   const processingCount = files.filter(f => f.status === 'processing').length
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-slate-50">
+    <div className="h-screen flex flex-col overflow-hidden bg-slate-50 relative">
+      {/* Fullscreen Drag Overlay */}
+      {isDragging && (
+        <div
+          className="absolute inset-0 z-50 bg-black/40 flex items-center justify-center"
+          onDrop={handleDrop as unknown as React.DragEventHandler}
+          onDragOver={(e) => e.preventDefault()}
+        >
+          <div className="bg-white rounded-2xl shadow-2xl p-12 text-center border-2 border-dashed border-primary">
+            <Upload className="h-16 w-16 mx-auto mb-4 text-primary animate-bounce" />
+            <h2 className="text-2xl font-bold mb-2">松开鼠标上传</h2>
+            <p className="text-muted-foreground">支持 PNG、JPG、WebP 格式</p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="h-14 border-b bg-white flex-shrink-0">
         <div className="max-w-[1600px] mx-auto px-6 h-full flex items-center">
@@ -314,7 +399,11 @@ function App() {
                       ? 'bg-primary/5 border-primary'
                       : 'hover:bg-slate-50'
                       }`}
-                    onClick={() => setConfig(prev => ({ ...prev, inputScale: parseInt(value) }))}
+                    onClick={() => setConfig(prev => ({
+                      ...prev,
+                      inputScale: parseInt(value),
+                      selectedDensities: getRecommendedDensities(parseInt(value))
+                    }))}
                   >
                     <RadioGroupItem value={value} id={`r${value}`} className="sr-only" />
                     <span className="font-semibold">{label}</span>
@@ -519,7 +608,7 @@ function App() {
                       ) : (
                         <div className="flex items-center gap-2 mb-1">
                           <p className="text-sm font-medium truncate">{file.outputName}.webp</p>
-                          {file.status === 'done' && (
+                          {file.status === 'ready' && (
                             <button
                               onClick={() => startEditing(file.id)}
                               className="text-muted-foreground hover:text-foreground"
@@ -545,17 +634,14 @@ function App() {
                           <span>{file.progress}%</span>
                         </div>
                       )}
-                      {file.status === 'ready' && (
+                      {file.status === 'ready' && downloadingId !== file.id && (
                         <Badge variant="secondary" className="text-xs">待下载</Badge>
-                      )}
-                      {file.status === 'done' && downloadingId !== file.id && (
-                        <CheckCircle2 className="h-4 w-4 text-green-600" />
                       )}
                     </div>
 
                     {/* Actions */}
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      {(file.status === 'ready' || file.status === 'done') && (
+                      {file.status === 'ready' && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -590,14 +676,13 @@ function App() {
             <div className="flex-shrink-0 border-t bg-white px-6 py-3 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
                 {processingCount > 0 && `${processingCount} 个处理中 · `}
-                {doneCount > 0 && `${doneCount} 个已完成`}
-                {processingCount === 0 && doneCount === 0 && `${files.length} 个待处理`}
+                {readyCount > 0 && `${readyCount} 个待下载`}
               </p>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={clearAll}>
                   清空全部
                 </Button>
-                {doneCount > 0 && (
+                {readyCount > 0 && (
                   <Button size="sm" onClick={downloadAll} disabled={downloadingId === 'all'}>
                     {downloadingId === 'all' ? (
                       <Loader2 className="h-4 w-4 mr-1 animate-spin" />

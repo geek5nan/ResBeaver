@@ -1,6 +1,6 @@
 import { ConvertConfig } from '@/types'
 
-const STORAGE_KEY = 'image-converter-config'
+const STORAGE_KEY = 'asset-scaler-config'
 
 export function saveConfig(config: ConvertConfig) {
   try {
@@ -26,8 +26,7 @@ export function getDefaultConfig(): ConvertConfig {
   return {
     inputScale: 3,
     quality: 75,
-    lossless: false, // Match AS default: Lossy encoding
-    selectedDensities: ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi'], // 默认生成这4个密度
+    lossless: false,
+    selectedDensities: ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi'],
   }
 }
-
