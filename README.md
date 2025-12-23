@@ -1,75 +1,70 @@
-# AssetScaler
+# ResBeaver (切图生成器)
 
-Multi-density asset generator for Android.
+Android 资源管理大师 - 图片多密度转换与字符串资源一键合并。
 
-🌐 **Live Demo**: [asset-scaler.pages.dev](https://asset-scaler.pages.dev)
-📄 **AI Context**: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) (详细的项目技术背景与逻辑说明)
+🌐 **Live Demo**: [resbeaver.pages.dev](https://resbeaver.pages.dev)
+📄 **AI Context**: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md)
 
-## 使用说明
+---
 
-### 快速开始
+## 🚀 核心功能
 
-1. **上传图片** - 拖拽 PNG/JPG/WebP 图片到上传区域，或点击选择文件
-2. **配置参数** - 在左侧面板设置输入倍数、压缩质量和输出目录
-3. **下载资源** - 点击下载按钮获取包含多密度资源的 ZIP 包
+### 1. 图片资源 (Drawable Processor)
+自动化 Android 图片资源适配。将一张高倍图自动转换为适配各种屏幕密度的 WebP 格式。
+- **多密度生成**: 自动生成 mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi。
+- **WebP 编码**: 支持有损 (Lossy) 和无损 (Lossless) 压缩。
+- **智能缩放**: 采样高质量算法，确保在各倍率下清晰。
+- **批量处理**: 支持一键重命名、批量下载 ZIP 包。
 
-### 参数说明
+### 2. 字符串资源 (String Processor)
+Android 多语言翻译资源的高效管理工具。解决多语言 Excel/XML 导入合并的烦恼。
+- **项目扫描**: 自动识别 Android 项目中的 `res` 目录与模块。
+- **语言映射**: 灵活配置源文件与目标语言目录的映射关系。
+- **变更预览**: 精确到代码行的差异对比（Diff Preview）。
+- **无损合并**: 自动合并新增词条，保留原有注释，支持覆盖或追加模式。
+- **安全导入**: 基于浏览器原生 File System Access API，直接写入本地项目。
 
-#### 输入图片倍数
-选择您的原始图片对应的密度：
-- **1x (mdpi)** - 原始 1 倍图，将生成 mdpi
-- **2x (xhdpi)** - 2 倍图，将生成 mdpi、hdpi、xhdpi
-- **3x (xxhdpi)** - 3 倍图（推荐），将生成 mdpi、hdpi、xhdpi、xxhdpi
-- **4x (xxxhdpi)** - 4 倍高清图，将生成全部 5 种密度
+---
 
-#### 编码模式
-- **Lossy (有损压缩)** - 文件体积更小，适合大多数场景
-- **Lossless (无损压缩)** - 保留原始画质，适合需要精确还原的场景
+## 📖 使用指南
 
-#### 压缩质量
-- Lossy 模式：10-100，建议 75-85 以平衡质量和体积
-- Lossless 模式：0-100，数值越高压缩越慢但文件更小
+### 图片处理
+1. **上传**: 拖拽 PNG/JPG 到区域，或点击上传。
+2. **倍率**: 选择输入图的倍率（建议 3x 或 4x）。
+3. **密度**: 勾选需要的密度（默认自动推荐）。
+4. **下载**: 点击单个下载或统一下载 ZIP。
 
-#### 输出目录
-勾选需要生成的 Android drawable 目录：
-| 目录 | 密度比例 | 说明 |
-|------|---------|------|
-| drawable-mdpi | 1x | 中密度 (~160dpi) |
-| drawable-hdpi | 1.5x | 高密度 (~240dpi) |
-| drawable-xhdpi | 2x | 超高密度 (~320dpi) |
-| drawable-xxhdpi | 3x | 超超高密度 (~480dpi) |
-| drawable-xxxhdpi | 4x | 超超超高密度 (~640dpi) |
-| drawable | 1x | 通用目录（与 mdpi 相同） |
+### 字符串合并
+1. **选择项目**: 点击“选择项目”按钮，指向你的 Android 工程根目录。
+2. **选择翻译源**: 点击“翻译文件夹”按钮，选择包含各语言 XML 的文件夹。
+3. **编辑规则**: 点击“编辑导入规则”应用或修改文件名与 Locale 的对应关系。
+4. **预览与合并**: 在左侧选择语言查看 Diff，确定无误后点击“开始导入”。
 
-### 使用技巧
+---
 
-- 🎯 **WebP 转换效果与 Android Studio 一致**，可直接用于项目开发
-- 📌 **建议使用 3x 或 4x 图片** 作为输入，以获得最佳的缩放质量
-- ✏️ **点击文件名旁的编辑图标** 可以修改输出文件名
-- 📦 **多文件统一下载** 会将所有图片合并到同一个 ZIP 包中
-- 💾 **配置自动保存** 到浏览器本地存储，下次使用无需重新设置
+## 🛠️ 技术背景
 
-## Development
+- **核心架构**: React 18 + Vite + TypeScript + Tailwind CSS
+- **图片处理**: WASM (@jsquash/webp) + Canvas API
+- **文件操作**: Browser File System Access API (直接操作本地磁盘文件)
+- **UI 组件**: Shadcn UI + Lucide Icons + Framer Motion
+
+## 💻 本地开发
 
 ```bash
-# Install
+# 安装依赖
 npm install
 
-# Dev server
+# 启动开发服务器
 npm run dev
 
-# Build
+# 构建生产版本
 npm run build
 ```
 
-### Environment Variables
+---
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `VITE_GA_ID` | Google Analytics 4 Measurement ID | No |
-
-To enable Google Analytics, set `VITE_GA_ID` in your deployment platform (e.g., Cloudflare Pages, Vercel).
-
-## License
+## 📜 许可证
 
 MIT
+   
