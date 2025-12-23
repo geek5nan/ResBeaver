@@ -2,56 +2,81 @@
   <img src="public/logo.png" alt="ResBeaver Logo" width="200">
 </p>
 
-# ResBeaver (切图生成器)
+<h1 align="center">ResBeaver</h1>
 
-Android 资源管理大师 - 图片多密度转换与字符串资源一键合并。
+<p align="center">
+  <strong>Android 资源管理工具</strong><br>
+  图片多密度转换 · 字符串资源合并
+</p>
 
-🌐 **Live Demo**: [resbeaver.pages.dev](https://resbeaver.pages.dev)
-📄 **AI Context**: [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md)
+<p align="center">
+  🌐 <a href="https://resbeaver.pages.dev">在线体验</a> · 
+  📄 <a href="./PROJECT_CONTEXT.md">项目上下文</a>
+</p>
 
 ---
 
-## 🚀 核心功能
+## ✨ 功能特性
 
-### 1. 图片资源 (Drawable Processor)
-自动化 Android 图片资源适配。将一张高倍图自动转换为适配各种屏幕密度的 WebP 格式。
-- **多密度生成**: 自动生成 mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi。
-- **WebP 编码**: 支持有损 (Lossy) 和无损 (Lossless) 压缩。
-- **智能缩放**: 采样高质量算法，确保在各倍率下清晰。
-- **批量处理**: 支持一键重命名、批量下载 ZIP 包。
+### 🖼️ Drawable 处理器
 
-### 2. 字符串资源 (String Processor)
-Android 多语言翻译资源的高效管理工具。解决多语言 Excel/XML 导入合并的烦恼。
-- **项目扫描**: 自动识别 Android 项目中的 `res` 目录与模块。
-- **语言映射**: 灵活配置源文件与目标语言目录的映射关系。
-- **变更预览**: 精确到代码行的差异对比（Diff Preview）。
-- **无损合并**: 自动合并新增词条，保留原有注释，支持覆盖或追加模式。
-- **安全导入**: 基于浏览器原生 File System Access API，直接写入本地项目。
+一键生成 Android 多密度适配图片，告别手动切图。
+
+| 功能 | 描述 |
+|------|------|
+| **多密度生成** | 自动生成 mdpi / hdpi / xhdpi / xxhdpi / xxxhdpi |
+| **WebP 编码** | 支持有损 (Lossy) 与无损 (Lossless) 压缩模式 |
+| **质量控制** | 可调节压缩质量/压缩力度 (0-100) |
+| **智能缩放** | 高质量采样算法，确保缩放后清晰度 |
+| **批量操作** | 支持文件重命名、一键下载 ZIP 包 |
+
+### 📝 String 处理器
+
+Android 多语言 XML 资源的高效合并工具，解决翻译导入痛点。
+
+| 功能 | 描述 |
+|------|------|
+| **项目扫描** | 自动识别 Android 项目中所有 `res` 目录与模块 |
+| **语言映射** | 灵活配置源文件 → 目标 `values-*` 目录的映射规则 |
+| **Diff 预览** | 精确到行的变更对比，支持键盘快捷导航 (N/P) |
+| **注释保留** | 智能合并算法，完整保留目标文件中的注释 |
+| **双模式合并** | 覆盖模式 / 仅新增模式，按需选择 |
+| **配置持久化** | 映射规则自动保存，支持导入/导出 JSON 配置 |
+| **本地写入** | 基于 File System Access API，直接写入本地项目 |
 
 ---
 
 ## 📖 使用指南
 
-### 图片处理
-1. **上传**: 拖拽 PNG/JPG 到区域，或点击上传。
-2. **倍率**: 选择输入图的倍率（建议 3x 或 4x）。
-3. **密度**: 勾选需要的密度（默认自动推荐）。
-4. **下载**: 点击单个下载或统一下载 ZIP。
+### Drawable 处理
 
-### 字符串合并
-1. **选择项目**: 点击“选择项目”按钮，指向你的 Android 工程根目录。
-2. **选择翻译源**: 点击“翻译文件夹”按钮，选择包含各语言 XML 的文件夹。
-3. **编辑规则**: 点击“编辑导入规则”应用或修改文件名与 Locale 的对应关系。
-4. **预览与合并**: 在左侧选择语言查看 Diff，确定无误后点击“开始导入”。
+1. **上传图片** — 拖拽或点击上传 PNG/JPG/WebP (建议使用 3x 或 4x 高清图)
+2. **选择输入倍率** — 标注原图是几倍图
+3. **选择输出密度** — 勾选需要生成的 drawable 目录
+4. **调整编码参数** — 选择 Lossy/Lossless 模式，调整质量
+5. **下载** — 单个下载或批量下载 ZIP
+
+### String 处理
+
+1. **选择项目** — 指向 Android 工程根目录
+2. **选择翻译源** — 选择包含翻译 XML 文件的文件夹
+3. **配置映射** — 编辑源文件与目标 locale 的对应关系
+4. **预览变更** — 逐行检查 Diff，使用 N/P 快捷键导航
+5. **执行导入** — 确认无误后一键合并
 
 ---
 
-## 🛠️ 技术背景
+## 🛠️ 技术栈
 
-- **核心架构**: React 18 + Vite + TypeScript + Tailwind CSS
-- **图片处理**: WASM (@jsquash/webp) + Canvas API
-- **文件操作**: Browser File System Access API (直接操作本地磁盘文件)
-- **UI 组件**: Shadcn UI + Lucide Icons + Framer Motion
+| 类型 | 技术 |
+|------|------|
+| **框架** | React 18 + TypeScript + Vite |
+| **样式** | Tailwind CSS + Shadcn UI |
+| **图标** | Lucide Icons |
+| **图片处理** | WebAssembly (@aspect/webp) + Canvas API |
+| **文件操作** | File System Access API |
+
+---
 
 ## 💻 本地开发
 
@@ -71,4 +96,3 @@ npm run build
 ## 📜 许可证
 
 MIT
-   
