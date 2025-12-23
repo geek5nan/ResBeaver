@@ -50,6 +50,30 @@ export interface MergePreview {
   overwriteCount: number
   isNewFile: boolean
 }
+
+// Diff item for detailed preview
+export interface DiffItem {
+  key: string
+  type: 'add' | 'update' | 'unchanged'
+  newValue: string
+  oldValue?: string  // only for update
+}
+
+// Line-based diff for preview (preserves original file structure)
+export interface XmlDiffLine {
+  lineNumber: number          // line number in target file (0 for new lines)
+  content: string             // the line content
+  type: 'unchanged' | 'update-old' | 'update-new' | 'add'
+  stringKey?: string          // if this line is a <string> element, the key
+}
+
+// Enhanced MergePreview with diff details
+export interface MergePreviewDetail extends MergePreview {
+  addedItems: DiffItem[]
+  updatedItems: DiffItem[]
+  unchangedItems: DiffItem[]  // existing items that won't change
+  diffLines: XmlDiffLine[]    // line-by-line diff for display
+}
 // Discovered Android resource directory info
 export interface AndroidResourceDir {
   name: string                 // e.g., 'app' or 'lib'

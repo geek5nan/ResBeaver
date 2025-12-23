@@ -3,7 +3,7 @@
  * Enhanced with File System Access API support
  */
 
-import { LocaleResources, MergePreview, SourceXmlFile, LocaleMapping, AndroidResourceDir } from '@/types'
+import { LocaleResources, MergePreview, MergePreviewDetail, DiffItem, SourceXmlFile, LocaleMapping, AndroidResourceDir } from '@/types'
 import { guessLocaleFromFileName } from './localeMapping'
 
 export interface ParseResult {
@@ -279,6 +279,243 @@ export function generateMergePreview(
                 addCount: source.entries.size,
                 overwriteCount: 0,
                 isNewFile: true
+            })
+        }
+    }
+
+    return previews
+}
+
+/**
+ * Generate merge preview with detailed diff items
+ * Now uses rawContent to preserve original file order and comments
+ */
+export function generateMergePreviewWithDetails(
+    sourceResources: LocaleResources[],
+    targetResources: LocaleResources[],
+    replaceExisting: boolean
+): MergePreviewDetail[] {
+    const previews: MergePreviewDetail[] = []
+    const targetMap = new Map(targetResources.map(r => [r.locale, r]))
+
+    for (const source of sourceResources) {
+        const target = targetMap.get(source.locale)
+        const addedItems: DiffItem[] = []
+        const updatedItems: DiffItem[] = []
+        const unchangedItems: DiffItem[] = []
+        const diffLines: import('@/types').XmlDiffLine[] = []
+
+        if (target && target.rawContent) {
+            // Track which target keys are updates
+            const updateMap = new Map<string, string>() // key -> new value
+            const processedKeys = new Set<string>()
+
+            // Build update map from source
+            source.entries.forEach((value, key) => {
+                processedKeys.add(key)
+                if (target.entries.has(key)) {
+                    const oldValue = target.entries.get(key)!
+                    if (oldValue !== value && replaceExisting) {
+                        updateMap.set(key, value)
+                        updatedItems.push({
+                            key,
+                            type: 'update',
+                            newValue: value,
+                            oldValue
+                        })
+                    } else {
+                        unchangedItems.push({
+                            key,
+                            type: 'unchanged',
+                            newValue: oldValue
+                        })
+                    }
+                } else {
+                    addedItems.push({
+                        key,
+                        type: 'add',
+                        newValue: value
+                    })
+                }
+            })
+
+            // Add remaining target entries that are not in source
+            target.entries.forEach((value, key) => {
+                if (!processedKeys.has(key)) {
+                    unchangedItems.push({
+                        key,
+                        type: 'unchanged',
+                        newValue: value
+                    })
+                }
+            })
+
+            // Parse rawContent line by line to generate diffLines
+            const lines = target.rawContent.split('\n')
+            const stringRegex = /<string\s+name="([^"]+)"[^>]*>/
+
+            lines.forEach((line, index) => {
+                const match = line.match(stringRegex)
+                const lineNumber = index + 1
+
+                if (match) {
+                    const key = match[1]
+                    if (updateMap.has(key)) {
+                        // This line will be updated - show old then new
+                        diffLines.push({
+                            lineNumber,
+                            content: line,
+                            type: 'update-old',
+                            stringKey: key
+                        })
+                        // Generate new line content
+                        const newValue = updateMap.get(key)!
+                        const newLine = line.replace(
+                            />.*<\/string>/,
+                            `>${newValue}</string>`
+                        )
+                        diffLines.push({
+                            lineNumber: 0, // new line, no number
+                            content: newLine,
+                            type: 'update-new',
+                            stringKey: key
+                        })
+                    } else {
+                        // Unchanged line
+                        diffLines.push({
+                            lineNumber,
+                            content: line,
+                            type: 'unchanged',
+                            stringKey: key
+                        })
+                    }
+                } else {
+                    // Non-string line (comments, tags, etc.) - keep as is
+                    diffLines.push({
+                        lineNumber,
+                        content: line,
+                        type: 'unchanged'
+                    })
+                }
+            })
+
+            // Add new entries at the end (before closing </resources>)
+            if (addedItems.length > 0) {
+                // Find the index of closing </resources> tag
+                const closingIndex = diffLines.findIndex(l => l.content.includes('</resources>'))
+                const insertIndex = closingIndex >= 0 ? closingIndex : diffLines.length
+
+                addedItems.forEach(item => {
+                    diffLines.splice(insertIndex, 0, {
+                        lineNumber: 0,
+                        content: `    <string name="${item.key}">${item.newValue}</string>`,
+                        type: 'add',
+                        stringKey: item.key
+                    })
+                })
+            }
+
+            previews.push({
+                locale: source.locale,
+                folderName: source.folderName,
+                sourceCount: source.entries.size,
+                targetCount: target.entries.size,
+                addCount: addedItems.length,
+                overwriteCount: updatedItems.length,
+                isNewFile: false,
+                addedItems,
+                updatedItems,
+                unchangedItems,
+                diffLines
+            })
+        } else if (target) {
+            // Target exists but no rawContent - fallback to simple diff
+            source.entries.forEach((value, key) => {
+                if (target.entries.has(key)) {
+                    const oldValue = target.entries.get(key)!
+                    if (oldValue !== value && replaceExisting) {
+                        updatedItems.push({ key, type: 'update', newValue: value, oldValue })
+                    } else {
+                        unchangedItems.push({ key, type: 'unchanged', newValue: oldValue })
+                    }
+                } else {
+                    addedItems.push({ key, type: 'add', newValue: value })
+                }
+            })
+
+            // Generate simple diffLines from items
+            unchangedItems.forEach((item, idx) => {
+                diffLines.push({
+                    lineNumber: idx + 1,
+                    content: `    <string name="${item.key}">${item.newValue}</string>`,
+                    type: 'unchanged',
+                    stringKey: item.key
+                })
+            })
+            updatedItems.forEach(item => {
+                diffLines.push({
+                    lineNumber: 0,
+                    content: `    <string name="${item.key}">${item.oldValue}</string>`,
+                    type: 'update-old',
+                    stringKey: item.key
+                })
+                diffLines.push({
+                    lineNumber: 0,
+                    content: `    <string name="${item.key}">${item.newValue}</string>`,
+                    type: 'update-new',
+                    stringKey: item.key
+                })
+            })
+            addedItems.forEach(item => {
+                diffLines.push({
+                    lineNumber: 0,
+                    content: `    <string name="${item.key}">${item.newValue}</string>`,
+                    type: 'add',
+                    stringKey: item.key
+                })
+            })
+
+            previews.push({
+                locale: source.locale,
+                folderName: source.folderName,
+                sourceCount: source.entries.size,
+                targetCount: target.entries.size,
+                addCount: addedItems.length,
+                overwriteCount: updatedItems.length,
+                isNewFile: false,
+                addedItems,
+                updatedItems,
+                unchangedItems,
+                diffLines
+            })
+        } else {
+            // New locale - all items are additions
+            source.entries.forEach((value, key) => {
+                addedItems.push({
+                    key,
+                    type: 'add',
+                    newValue: value
+                })
+                diffLines.push({
+                    lineNumber: 0,
+                    content: `    <string name="${key}">${value}</string>`,
+                    type: 'add',
+                    stringKey: key
+                })
+            })
+
+            previews.push({
+                locale: source.locale,
+                folderName: source.folderName,
+                sourceCount: source.entries.size,
+                targetCount: 0,
+                addCount: addedItems.length,
+                overwriteCount: 0,
+                isNewFile: true,
+                addedItems,
+                updatedItems: [],
+                unchangedItems: [],
+                diffLines
             })
         }
     }

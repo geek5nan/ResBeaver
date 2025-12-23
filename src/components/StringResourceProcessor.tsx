@@ -1,13 +1,14 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
-import { FolderOpen, ArrowRight, Loader2, Check, AlertCircle, RefreshCw, Save, Download, Upload, Settings2 } from 'lucide-react'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { FolderOpen, Loader2, Check, AlertCircle, MoreHorizontal, Download, Upload, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import {
     scanStringsFromDirectory,
     scanAllXmlFiles,
-    generateMergePreview,
+    generateMergePreviewWithDetails,
     executeMerge,
     applyMappingToSources,
     findAndroidResourceDirectories
@@ -20,43 +21,48 @@ import {
 } from '@/lib/localeMapping'
 import {
     LocaleResources,
-    MergePreview,
+    MergePreviewDetail,
     SourceXmlFile,
     LocaleMapping,
     LocaleMappingConfig,
     AndroidResourceDir
 } from '@/types'
+import { DiffPreview } from './DiffPreview'
+import { ModuleSelectorDialog } from './ModuleSelectorDialog'
 
 type OperationStatus = 'idle' | 'scanning' | 'ready' | 'merging' | 'success' | 'error'
 
+const MAX_VISIBLE_MODULES = 4
+
 export function StringResourceProcessor() {
-    // Directory handles
-    const [sourceDirHandle, setSourceDirHandle] = useState<FileSystemDirectoryHandle | null>(null)
-    const [targetDirHandle, setTargetDirHandle] = useState<FileSystemDirectoryHandle | null>(null)
-
-    // Source files and mappings
-    const [sourceFiles, setSourceFiles] = useState<SourceXmlFile[]>([])
-    const [mappings, setMappings] = useState<LocaleMapping[]>([])
-
-    // Target resources
-    const [targetResources, setTargetResources] = useState<LocaleResources[]>([])
-
-    // Preview and status
-    const [mergePreview, setMergePreview] = useState<MergePreview[]>([])
-    const [status, setStatus] = useState<OperationStatus>('idle')
-    const [error, setError] = useState<string | null>(null)
-    const [showMappingConfig, setShowMappingConfig] = useState(false)
-
-    // Android project res folders
+    // Project state
     const [projectRootName, setProjectRootName] = useState<string | null>(null)
     const [discoveredResDirs, setDiscoveredResDirs] = useState<AndroidResourceDir[]>([])
     const [selectedResDir, setSelectedResDir] = useState<AndroidResourceDir | null>(null)
+    const [targetDirHandle, setTargetDirHandle] = useState<FileSystemDirectoryHandle | null>(null)
+    const [targetResources, setTargetResources] = useState<LocaleResources[]>([])
 
-    // Import comment
-    const [importComment, setImportComment] = useState<string>(
-        () => `Imported at ${new Date().toISOString().split('T')[0]}`
-    )
+    // Source state
+    const [sourceDirHandle, setSourceDirHandle] = useState<FileSystemDirectoryHandle | null>(null)
+    const [sourceFiles, setSourceFiles] = useState<SourceXmlFile[]>([])
 
+    // Mapping state
+    const [mappings, setMappings] = useState<LocaleMapping[]>([])
+    const [showMappingDialog, setShowMappingDialog] = useState(false)
+
+    // Options
+    const [replaceExisting, setReplaceExisting] = useState(true)
+
+    // Preview state
+    const [previewDetails, setPreviewDetails] = useState<MergePreviewDetail[]>([])
+    const [selectedLocale, setSelectedLocale] = useState<string | null>(null)
+
+    // UI state
+    const [status, setStatus] = useState<OperationStatus>('idle')
+    const [error, setError] = useState<string | null>(null)
+    const [showModuleDialog, setShowModuleDialog] = useState(false)
+
+    // Refs
     const importInputRef = useRef<HTMLInputElement>(null)
 
     // Check if File System Access API is supported
@@ -70,19 +76,83 @@ export function StringResourceProcessor() {
         }
     }, [])
 
-    // Update merge preview when mappings or target changes
+    // Handle ESC key to close dialogs
     useEffect(() => {
-        // Generate preview when source files exist and target directory is selected
-        // Note: targetResources may be empty if target directory has no existing strings.xml
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                if (showMappingDialog) setShowMappingDialog(false)
+                if (showModuleDialog) setShowModuleDialog(false)
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [showMappingDialog, showModuleDialog])
+
+    // Update preview when data changes
+    useEffect(() => {
         if (sourceFiles.length > 0 && mappings.length > 0 && targetDirHandle) {
             const sourceResources = applyMappingToSources(sourceFiles, mappings)
-            const preview = generateMergePreview(sourceResources, targetResources)
-            setMergePreview(preview)
+            const preview = generateMergePreviewWithDetails(sourceResources, targetResources, replaceExisting)
+            setPreviewDetails(preview)
+
+            // Auto-select first locale if none selected
+            if (!selectedLocale && preview.length > 0) {
+                setSelectedLocale(preview[0].locale)
+            }
+
             setStatus('ready')
         }
-    }, [mappings, sourceFiles, targetResources, targetDirHandle])
+    }, [mappings, sourceFiles, targetResources, targetDirHandle, replaceExisting, selectedLocale])
 
-    // Select source directory (non-standard structure)
+    // Load a specific res directory
+    const loadResDirectory = useCallback(async (resDir: AndroidResourceDir) => {
+        setSelectedResDir(resDir)
+        setTargetDirHandle(resDir.handle)
+        setStatus('scanning')
+        try {
+            const resources = await scanStringsFromDirectory(resDir.handle)
+            setTargetResources(resources)
+            setStatus(sourceFiles.length > 0 ? 'ready' : 'idle')
+        } catch {
+            setError('读取目标资源失败')
+            setStatus('error')
+        }
+    }, [sourceFiles.length])
+
+    // Select project directory (Step 1)
+    const selectProjectDir = useCallback(async () => {
+        try {
+            const rootHandle = await window.showDirectoryPicker({ mode: 'readwrite', id: 'string-target-dir' })
+            setProjectRootName(rootHandle.name)
+            setStatus('scanning')
+            setError(null)
+
+            const resDirs = await findAndroidResourceDirectories(rootHandle)
+            setDiscoveredResDirs(resDirs)
+
+            if (resDirs.length === 0) {
+                setError('未在所选目录中找到 Android 资源目录 (src/main/res)')
+                setStatus('error')
+            } else if (resDirs.length === 1) {
+                await loadResDirectory(resDirs[0])
+            } else {
+                // Multiple found, look for 'app' module first
+                const appModule = resDirs.find(d => d.name.toLowerCase() === 'app')
+                if (appModule) {
+                    await loadResDirectory(appModule)
+                } else {
+                    await loadResDirectory(resDirs[0])
+                }
+            }
+        } catch (err) {
+            if ((err as Error).name !== 'AbortError') {
+                setError('选择项目失败')
+                setStatus('error')
+            }
+        }
+    }, [loadResDirectory])
+
+    // Select source directory (Step 2)
     const selectSourceDir = useCallback(async () => {
         try {
             const handle = await window.showDirectoryPicker({ mode: 'read', id: 'string-source-dir' })
@@ -102,13 +172,8 @@ export function StringResourceProcessor() {
                 entryCount: f.entries.size
             }))
             setMappings(initialMappings)
-            setShowMappingConfig(true)
 
-            // Update preview if target is already selected
-            if (targetResources.length > 0) {
-                const sourceResources = applyMappingToSources(files, initialMappings)
-                const preview = generateMergePreview(sourceResources, targetResources)
-                setMergePreview(preview)
+            if (targetDirHandle) {
                 setStatus('ready')
             } else {
                 setStatus('idle')
@@ -119,64 +184,7 @@ export function StringResourceProcessor() {
                 setStatus('error')
             }
         }
-    }, [targetResources])
-
-    // Load a specific res directory and scan strings
-    const loadResDirectory = useCallback(async (resDir: AndroidResourceDir) => {
-        setSelectedResDir(resDir)
-        setTargetDirHandle(resDir.handle)
-        setStatus('scanning')
-        try {
-            const resources = await scanStringsFromDirectory(resDir.handle)
-            setTargetResources(resources)
-            setStatus('ready')
-        } catch (err) {
-            setError('读取目标资源失败')
-            setStatus('error')
-        }
-    }, [])
-
-    // Select target directory (support root project selection)
-    const selectTargetDir = useCallback(async () => {
-        try {
-            const rootHandle = await window.showDirectoryPicker({ mode: 'readwrite', id: 'string-target-dir' })
-            setProjectRootName(rootHandle.name)
-            setStatus('scanning')
-            setError(null)
-
-            const resDirs = await findAndroidResourceDirectories(rootHandle)
-            setDiscoveredResDirs(resDirs)
-
-            if (resDirs.length === 0) {
-                setError('未在所选目录中找到 Android 资源目录 (src/main/res)')
-                setStatus('error')
-            } else if (resDirs.length === 1) {
-                // One found, auto-select
-                await loadResDirectory(resDirs[0])
-            } else {
-                // Multiple found, look for 'app' module
-                const appModule = resDirs.find(d => d.name.toLowerCase() === 'app')
-                if (appModule) {
-                    await loadResDirectory(appModule)
-                } else {
-                    // Let user select manually
-                    setStatus('idle')
-                }
-            }
-        } catch (err) {
-            if ((err as Error).name !== 'AbortError') {
-                setError('选择项目失败')
-                setStatus('error')
-            }
-        }
-    }, [loadResDirectory])
-
-    // Update a single mapping
-    const updateMapping = useCallback((index: number, updates: Partial<LocaleMapping>) => {
-        setMappings(prev => prev.map((m, i) =>
-            i === index ? { ...m, ...updates } : m
-        ))
-    }, [])
+    }, [targetDirHandle])
 
     // Toggle mapping enabled
     const toggleMapping = useCallback((index: number) => {
@@ -185,17 +193,25 @@ export function StringResourceProcessor() {
         ))
     }, [])
 
-    // Save mappings to localStorage
-    const handleSaveMappings = useCallback(() => {
-        const config: LocaleMappingConfig = {
-            mappings,
-            lastModified: new Date().toISOString()
+    // Update single mapping
+    const updateMapping = useCallback((index: number, updates: Partial<LocaleMapping>) => {
+        setMappings(prev => prev.map((m, i) =>
+            i === index ? { ...m, ...updates } : m
+        ))
+    }, [])
+
+    // Auto-save mappings when they change
+    useEffect(() => {
+        if (mappings.length > 0) {
+            const config: LocaleMappingConfig = {
+                mappings,
+                lastModified: new Date().toISOString()
+            }
+            saveMappingConfig(config)
         }
-        saveMappingConfig(config)
-        setError(null)
     }, [mappings])
 
-    // Export mappings as JSON
+    // Export mappings as JSON file
     const handleExportMappings = useCallback(() => {
         const config: LocaleMappingConfig = {
             mappings,
@@ -204,7 +220,7 @@ export function StringResourceProcessor() {
         exportMappingConfig(config)
     }, [mappings])
 
-    // Import mappings from JSON
+    // Import mappings from JSON file
     const handleImportMappings = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
@@ -233,9 +249,28 @@ export function StringResourceProcessor() {
         setStatus('merging')
         setError(null)
 
-        const sourceResources = applyMappingToSources(sourceFiles, mappings)
-        const comment = importComment.trim() || undefined
-        const result = await executeMerge(targetDirHandle, sourceResources, targetResources, comment)
+        // Filter out updates if replaceExisting is false
+        let sourceResources = applyMappingToSources(sourceFiles, mappings)
+
+        if (!replaceExisting) {
+            // Remove entries that already exist in target
+            const targetMap = new Map(targetResources.map(r => [r.locale, r]))
+            sourceResources = sourceResources.map(source => {
+                const target = targetMap.get(source.locale)
+                if (target) {
+                    const filteredEntries = new Map<string, string>()
+                    source.entries.forEach((value, key) => {
+                        if (!target.entries.has(key)) {
+                            filteredEntries.set(key, value)
+                        }
+                    })
+                    return { ...source, entries: filteredEntries }
+                }
+                return source
+            })
+        }
+
+        const result = await executeMerge(targetDirHandle, sourceResources, targetResources)
 
         if (result.success) {
             setStatus('success')
@@ -246,27 +281,18 @@ export function StringResourceProcessor() {
             setError(result.error || '合并失败')
             setStatus('error')
         }
-    }, [targetDirHandle, sourceFiles, mappings, targetResources, importComment])
+    }, [targetDirHandle, sourceFiles, mappings, targetResources, replaceExisting])
 
-    // Reset all
-    const handleReset = useCallback(() => {
-        setSourceDirHandle(null)
-        setTargetDirHandle(null)
-        setSourceFiles([])
-        setMappings([])
-        setTargetResources([])
-        setMergePreview([])
-        setStatus('idle')
-        setError(null)
-        setShowMappingConfig(false)
-    }, [])
+    // Get visible modules (for button group)
+    const visibleModules = discoveredResDirs.slice(0, MAX_VISIBLE_MODULES)
+    const hasMoreModules = discoveredResDirs.length > MAX_VISIBLE_MODULES
 
-    // Calculate totals
+    // Get enabled mappings and selected preview
     const enabledMappings = mappings.filter(m => m.enabled)
     const totalSourceEntries = enabledMappings.reduce((sum, m) => sum + (m.entryCount || 0), 0)
-    const totalTargetEntries = targetResources.reduce((sum, r) => sum + r.entries.size, 0)
-    const totalAdd = mergePreview.reduce((sum, p) => sum + p.addCount, 0)
-    const totalOverwrite = mergePreview.reduce((sum, p) => sum + p.overwriteCount, 0)
+    const selectedPreview = previewDetails.find(p => p.locale === selectedLocale) || null
+    const totalAdd = previewDetails.reduce((sum, p) => sum + p.addCount, 0)
+    const totalUpdate = previewDetails.reduce((sum, p) => sum + p.overwriteCount, 0)
 
     if (!isSupported) {
         return (
@@ -276,7 +302,6 @@ export function StringResourceProcessor() {
                     <h2 className="text-lg font-semibold mb-2">浏览器不支持</h2>
                     <p className="text-muted-foreground">
                         File System Access API 仅支持 Chrome 和 Edge 浏览器。
-                        请使用支持的浏览器访问此功能。
                     </p>
                 </div>
             </div>
@@ -284,294 +309,351 @@ export function StringResourceProcessor() {
     }
 
     return (
-        <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
-            {/* Header Description */}
-            <div className="p-6 pb-0">
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h2 className="text-lg font-semibold text-blue-900 mb-1">字符串资源处理器</h2>
-                    <p className="text-sm text-blue-700">
-                        将源目录的字符串资源合并到目标项目中，支持自定义文件名到语言的映射
-                    </p>
-                </div>
-            </div>
-
-            {/* Main Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                {/* Directory Selection Row */}
-                <div className="grid grid-cols-[1fr,auto,1fr] gap-4 items-start">
-                    {/* Source Directory */}
-                    <div className="bg-white rounded-lg border p-4">
-                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                            ① 文字目录
+        <div className="flex flex-1 overflow-hidden">
+            {/* Sidebar */}
+            <aside className="w-[280px] border-r bg-white flex-shrink-0 overflow-y-auto">
+                <div className="p-6 space-y-6">
+                    {/* Project (Output) Section */}
+                    <div>
+                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                            项目 (输出)
                         </h3>
                         <Button
                             variant="outline"
-                            className="w-full justify-start gap-2 h-12"
-                            onClick={selectSourceDir}
+                            className="w-full justify-start gap-2 h-10"
+                            onClick={selectProjectDir}
                         >
-                            <FolderOpen className="h-5 w-5" />
-                            {sourceDirHandle ? sourceDirHandle.name : '选择资源文件夹'}
+                            <FolderOpen className="h-4 w-4" />
+                            <span className="truncate">
+                                {projectRootName || '选择 Android 项目'}
+                            </span>
                         </Button>
 
-                        {sourceFiles.length > 0 && (
-                            <div className="mt-3 space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <p className="text-xs text-muted-foreground">
-                                        已识别 {sourceFiles.length} 个文件
-                                    </p>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-7 text-xs"
-                                        onClick={() => setShowMappingConfig(!showMappingConfig)}
-                                    >
-                                        <Settings2 className="h-3 w-3 mr-1" />
-                                        配置映射
-                                    </Button>
-                                </div>
+                        {/* Module Selection */}
+                        {discoveredResDirs.length > 1 && (
+                            <div className="mt-3">
+                                <Label className="text-xs text-muted-foreground mb-2 block">模块</Label>
                                 <div className="flex flex-wrap gap-1.5">
-                                    {enabledMappings.slice(0, 8).map(m => (
-                                        <Badge key={m.sourceFileName} variant="secondary" className="text-xs">
-                                            {m.locale === 'default' ? '默认' : m.locale}
-                                            <span className="ml-1 text-muted-foreground">({m.entryCount})</span>
-                                        </Badge>
-                                    ))}
-                                    {enabledMappings.length > 8 && (
-                                        <Badge variant="outline" className="text-xs">
-                                            +{enabledMappings.length - 8} 更多
-                                        </Badge>
+                                    {visibleModules.map(module => {
+                                        const isSelected = selectedResDir?.path === module.path
+                                        return (
+                                            <Button
+                                                key={module.path}
+                                                variant={isSelected ? 'default' : 'outline'}
+                                                size="sm"
+                                                className="h-7 text-xs px-2.5"
+                                                onClick={() => loadResDirectory(module)}
+                                            >
+                                                {module.name}
+                                            </Button>
+                                        )
+                                    })}
+                                    {hasMoreModules && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 text-xs px-2"
+                                            onClick={() => setShowModuleDialog(true)}
+                                        >
+                                            <MoreHorizontal className="h-3.5 w-3.5" />
+                                        </Button>
                                     )}
                                 </div>
-                                <p className="text-xs text-muted-foreground">
-                                    共 {enabledMappings.length} 个语言，{totalSourceEntries} 条字符串
-                                </p>
                             </div>
                         )}
                     </div>
 
-                    {/* Arrow */}
-                    <div className="flex items-center justify-center h-12 mt-8">
-                        <ArrowRight className="h-6 w-6 text-muted-foreground" />
-                    </div>
+                    <div className="h-px bg-border" />
 
-                    {/* Target Directory */}
-                    <div className="bg-white rounded-lg border p-4">
-                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                            ② 项目目录
+                    {/* Source (Input) Section */}
+                    <div>
+                        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                            字符串 (输入)
                         </h3>
                         <Button
                             variant="outline"
-                            className="w-full justify-start gap-2 h-12"
-                            onClick={selectTargetDir}
+                            className="w-full justify-start gap-2 h-10"
+                            onClick={selectSourceDir}
                         >
-                            <FolderOpen className="h-5 w-5" />
-                            {projectRootName || '选择 Android 项目'}
+                            <FolderOpen className="h-4 w-4" />
+                            <span className="truncate">
+                                {sourceDirHandle?.name || '选择翻译文件夹'}
+                            </span>
                         </Button>
 
-                        {discoveredResDirs.length > 1 && (
-                            <div className="mt-3 pt-3 border-t">
-                                <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                                    检测到多个资源模块:
-                                </label>
-                                <div className="flex flex-wrap gap-2">
-                                    {discoveredResDirs.map(dir => {
-                                        const isSelected = selectedResDir?.path === dir.path
+                        {sourceFiles.length > 0 && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                                {sourceFiles.length} 个文件, {totalSourceEntries} 条
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Mapping Section */}
+                    {mappings.length > 0 && (
+                        <>
+                            <div className="h-px bg-border" />
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                        映射配置
+                                    </h3>
+                                    <div className="flex items-center gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-6 w-6 p-0"
+                                            onClick={handleExportMappings}
+                                            title="导出为 JSON"
+                                        >
+                                            <Download className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-6 w-6 p-0"
+                                            onClick={() => importInputRef.current?.click()}
+                                            title="导入 JSON"
+                                        >
+                                            <Upload className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-6 w-6 p-0"
+                                            onClick={() => setShowMappingDialog(true)}
+                                            title="编辑映射"
+                                        >
+                                            <Settings2 className="h-3 w-3" />
+                                        </Button>
+                                        <input
+                                            ref={importInputRef}
+                                            type="file"
+                                            accept=".json"
+                                            className="hidden"
+                                            onChange={handleImportMappings}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Mapping Preview - fixed height with scroll */}
+                                <div className="max-h-32 overflow-y-auto space-y-1.5">
+                                    {mappings.map((m, idx) => (
+                                        <div
+                                            key={m.sourceFileName}
+                                            className={`flex items-center gap-2 text-xs ${!m.enabled ? 'opacity-50' : ''}`}
+                                        >
+                                            <Checkbox
+                                                checked={m.enabled}
+                                                onCheckedChange={() => toggleMapping(idx)}
+                                                className="h-3.5 w-3.5"
+                                            />
+                                            <span className="truncate flex-1 font-mono">
+                                                {m.sourceFileName.replace('.xml', '')}
+                                            </span>
+                                            <span className="text-muted-foreground">→</span>
+                                            <span className="font-mono text-muted-foreground">
+                                                {m.targetFolder.replace('values-', '')}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Options Section */}
+                    {mappings.length > 0 && (
+                        <>
+                            <div className="h-px bg-border" />
+                            <div>
+                                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                                    合并选项
+                                </h3>
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        id="replace-existing"
+                                        checked={replaceExisting}
+                                        onCheckedChange={(checked) => setReplaceExisting(!!checked)}
+                                    />
+                                    <Label htmlFor="replace-existing" className="text-sm cursor-pointer">
+                                        替换已有字段
+                                    </Label>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1.5 ml-6">
+                                    {replaceExisting ? '将覆盖目标中已存在的 key' : '跳过目标中已存在的 key'}
+                                </p>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="flex-1 flex flex-col overflow-hidden bg-slate-50">
+                {/* Content Area */}
+                <div className="flex-1 flex overflow-hidden p-6 gap-4">
+                    {previewDetails.length > 0 ? (
+                        <>
+                            {/* Language List */}
+                            <div className="w-[240px] flex-shrink-0 bg-white rounded-lg border overflow-hidden flex flex-col">
+                                <div className="px-4 py-2 border-b bg-slate-50">
+                                    <span className="text-sm font-medium">配对目录</span>
+                                </div>
+                                <div className="flex-1 overflow-y-auto">
+                                    {previewDetails.map(preview => {
+                                        const isSelected = preview.locale === selectedLocale
+                                        const hasUpdates = preview.overwriteCount > 0
                                         return (
-                                            <Button
-                                                key={dir.path}
-                                                variant={isSelected ? "default" : "outline"}
-                                                size="sm"
-                                                className="h-8 text-xs px-3"
-                                                onClick={() => loadResDirectory(dir)}
+                                            <button
+                                                key={preview.locale}
+                                                onClick={() => setSelectedLocale(preview.locale)}
+                                                className={`w-full text-left px-4 py-3 border-b transition-colors ${isSelected ? 'bg-primary/5' : 'hover:bg-slate-50'
+                                                    }`}
                                             >
-                                                {dir.name}
-                                            </Button>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-mono text-sm">
+                                                        {preview.folderName}
+                                                    </span>
+                                                    {preview.isNewFile && (
+                                                        <Badge variant="secondary" className="text-[10px] h-5">
+                                                            新建
+                                                        </Badge>
+                                                    )}
+                                                    {hasUpdates && (
+                                                        <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+                                                    )}
+                                                </div>
+                                                <div className="flex gap-3 mt-1 text-xs">
+                                                    {preview.addCount > 0 && (
+                                                        <span className="text-green-600">+{preview.addCount}</span>
+                                                    )}
+                                                    {preview.overwriteCount > 0 && (
+                                                        <span className="text-amber-600">~{preview.overwriteCount}</span>
+                                                    )}
+                                                    {preview.addCount === 0 && preview.overwriteCount === 0 && (
+                                                        <span className="text-muted-foreground">无变更</span>
+                                                    )}
+                                                </div>
+                                            </button>
                                         )
                                     })}
                                 </div>
                             </div>
-                        )}
 
-                        {targetResources.length > 0 && (
-                            <div className="mt-3 space-y-2">
-                                <div className="flex flex-wrap gap-1.5">
-                                    {targetResources.slice(0, 8).map(r => (
-                                        <Badge key={r.locale} variant="outline" className="text-xs">
-                                            {r.locale === 'default' ? '默认' : r.locale}
-                                            <span className="ml-1 text-muted-foreground">({r.entries.size})</span>
-                                        </Badge>
-                                    ))}
-                                    {targetResources.length > 8 && (
-                                        <Badge variant="outline" className="text-xs">
-                                            +{targetResources.length - 8} 更多
-                                        </Badge>
-                                    )}
-                                </div>
-                                <p className="text-xs text-muted-foreground">
-                                    共 {targetResources.length} 个语言，{totalTargetEntries} 条字符串
+                            {/* Diff Preview */}
+                            <DiffPreview preview={selectedPreview} />
+                        </>
+                    ) : (
+                        <div className="flex-1 flex items-center justify-center">
+                            <div className="text-center max-w-md">
+                                <FolderOpen className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                                <h2 className="text-lg font-medium text-slate-600 mb-2">
+                                    开始配置
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
+                                    {!projectRootName
+                                        ? '首先选择 Android 项目目录'
+                                        : !sourceDirHandle
+                                            ? '然后选择包含翻译文件的目录'
+                                            : '配置映射关系后即可预览变更'
+                                    }
                                 </p>
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
-
-                {/* Mapping Configuration */}
-                {showMappingConfig && mappings.length > 0 && (
-                    <div className="bg-white rounded-lg border">
-                        <div className="px-4 py-3 border-b bg-slate-50 flex items-center justify-between">
-                            <h3 className="text-sm font-semibold">语言映射配置</h3>
-                            <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="h-7" onClick={handleSaveMappings}>
-                                    <Save className="h-3 w-3 mr-1" />
-                                    保存
-                                </Button>
-                                <Button variant="ghost" size="sm" className="h-7" onClick={handleExportMappings}>
-                                    <Download className="h-3 w-3 mr-1" />
-                                    导出
-                                </Button>
-                                <Button variant="ghost" size="sm" className="h-7" onClick={() => importInputRef.current?.click()}>
-                                    <Upload className="h-3 w-3 mr-1" />
-                                    导入
-                                </Button>
-                                <input
-                                    ref={importInputRef}
-                                    type="file"
-                                    accept=".json"
-                                    className="hidden"
-                                    onChange={handleImportMappings}
-                                />
-                            </div>
-                        </div>
-                        <div className="max-h-64 overflow-y-auto">
-                            <table className="w-full text-sm">
-                                <thead className="bg-slate-50 sticky top-0">
-                                    <tr>
-                                        <th className="px-4 py-2 text-left font-medium w-8">启用</th>
-                                        <th className="px-4 py-2 text-left font-medium">源文件</th>
-                                        <th className="px-4 py-2 text-left font-medium">→</th>
-                                        <th className="px-4 py-2 text-left font-medium">目标目录</th>
-                                        <th className="px-4 py-2 text-right font-medium">条数</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y">
-                                    {mappings.map((mapping, index) => (
-                                        <tr key={mapping.sourceFileName} className={!mapping.enabled ? 'opacity-50' : ''}>
-                                            <td className="px-4 py-2">
-                                                <Checkbox
-                                                    checked={mapping.enabled}
-                                                    onCheckedChange={() => toggleMapping(index)}
-                                                />
-                                            </td>
-                                            <td className="px-4 py-2 font-mono text-xs">{mapping.sourceFileName}</td>
-                                            <td className="px-4 py-2 text-muted-foreground">→</td>
-                                            <td className="px-4 py-2">
-                                                <Input
-                                                    value={mapping.targetFolder}
-                                                    onChange={(e) => updateMapping(index, {
-                                                        targetFolder: e.target.value,
-                                                        locale: e.target.value === 'values' ? 'default' : e.target.value.replace('values-', '')
-                                                    })}
-                                                    className="h-7 text-xs font-mono w-40"
-                                                    disabled={!mapping.enabled}
-                                                />
-                                            </td>
-                                            <td className="px-4 py-2 text-right text-muted-foreground">{mapping.entryCount}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                )}
-
-                {/* Merge Preview */}
-                {mergePreview.length > 0 && (
-                    <div className="bg-white rounded-lg border">
-                        <div className="px-4 py-3 border-b bg-slate-50">
-                            <h3 className="text-sm font-semibold">合并预览</h3>
-                        </div>
-                        <div className="divide-y max-h-48 overflow-y-auto">
-                            {mergePreview.map(p => (
-                                <div key={p.locale} className="px-4 py-3 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <span className="font-mono text-sm">{p.folderName}/strings.xml</span>
-                                        {p.isNewFile && (
-                                            <Badge className="bg-green-100 text-green-700 text-xs">新建</Badge>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-4 text-sm">
-                                        {p.addCount > 0 && (
-                                            <span className="text-green-600">+{p.addCount} 新增</span>
-                                        )}
-                                        {p.overwriteCount > 0 && (
-                                            <span className="text-amber-600">{p.overwriteCount} 覆盖</span>
-                                        )}
-                                        {p.addCount === 0 && p.overwriteCount === 0 && (
-                                            <span className="text-muted-foreground">无变更</span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="px-4 py-3 border-t bg-slate-50 text-sm text-muted-foreground">
-                            总计: +{totalAdd} 新增, {totalOverwrite} 覆盖
-                        </div>
-                    </div>
-                )}
-
-                {/* Import Comment Input */}
-                {mergePreview.length > 0 && (totalAdd > 0 || totalOverwrite > 0) && (
-                    <div className="bg-white rounded-lg border p-4">
-                        <label className="text-sm font-medium mb-2 block">
-                            导入注释 <span className="text-muted-foreground font-normal">(可选，将作为 XML 注释插入)</span>
-                        </label>
-                        <Input
-                            value={importComment}
-                            onChange={(e) => setImportComment(e.target.value)}
-                            placeholder="例如: Imported at 2024-12-19"
-                            className="font-mono text-sm"
-                        />
-                    </div>
-                )}
 
                 {/* Status Messages */}
                 {status === 'success' && (
-                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+                    <div className="mx-6 mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
                         <Check className="h-5 w-5 text-green-600" />
                         <span className="text-green-700 font-medium">合并完成！文件已写入目标目录。</span>
                     </div>
                 )}
 
                 {error && (
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+                    <div className="mx-6 mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
                         <AlertCircle className="h-5 w-5 text-red-600" />
                         <span className="text-red-700">{error}</span>
                     </div>
                 )}
-            </div>
 
-            {/* Bottom Action Bar */}
-            {(sourceFiles.length > 0 || targetResources.length > 0) && (
-                <div className="flex-shrink-0 border-t bg-white px-6 py-3 flex items-center justify-between">
-                    <Button variant="ghost" size="sm" onClick={handleReset}>
-                        <RefreshCw className="h-4 w-4 mr-1" />
-                        重置
-                    </Button>
+                {/* Bottom Action Bar */}
+                {previewDetails.length > 0 && (
+                    <div className="flex-shrink-0 border-t bg-white px-6 py-3 flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground">
+                            {previewDetails.length} 个语言 · +{totalAdd} 新增 · ~{totalUpdate} 更新
+                        </p>
+                        <Button
+                            onClick={handleMerge}
+                            disabled={status === 'merging' || (totalAdd === 0 && totalUpdate === 0)}
+                        >
+                            {status === 'merging' ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    合并中...
+                                </>
+                            ) : (
+                                '执行合并'
+                            )}
+                        </Button>
+                    </div>
+                )}
+            </main>
 
-                    <Button
-                        onClick={handleMerge}
-                        disabled={status === 'merging' || mergePreview.length === 0 || (totalAdd === 0 && totalOverwrite === 0)}
-                        className="min-w-32"
+            {/* Module Selector Dialog */}
+            <ModuleSelectorDialog
+                open={showModuleDialog}
+                onClose={() => setShowModuleDialog(false)}
+                modules={discoveredResDirs}
+                selectedModule={selectedResDir}
+                onSelect={loadResDirectory}
+            />
+
+            {/* Mapping Editor Dialog */}
+            {showMappingDialog && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+                    onClick={() => setShowMappingDialog(false)}
+                >
+                    <div
+                        className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+                        onClick={(e) => e.stopPropagation()}
                     >
-                        {status === 'merging' ? (
-                            <>
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                合并中...
-                            </>
-                        ) : (
-                            '执行合并'
-                        )}
-                    </Button>
+                        <div className="px-6 py-4 border-b flex items-center justify-between">
+                            <h2 className="text-lg font-semibold">编辑映射配置</h2>
+                            <Button variant="ghost" size="sm" onClick={() => setShowMappingDialog(false)}>
+                                ✕
+                            </Button>
+                        </div>
+                        <div className="p-6 overflow-y-auto max-h-[calc(80vh-140px)]">
+                            <div className="space-y-3">
+                                {mappings.map((m, idx) => (
+                                    <div key={m.sourceFileName} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                                        <Checkbox
+                                            checked={m.enabled}
+                                            onCheckedChange={() => toggleMapping(idx)}
+                                        />
+                                        <div className="flex-1">
+                                            <p className="font-mono text-sm">{m.sourceFileName}</p>
+                                            <p className="text-xs text-muted-foreground">{m.entryCount} 条</p>
+                                        </div>
+                                        <span className="text-muted-foreground">→</span>
+                                        <Input
+                                            value={m.targetFolder}
+                                            onChange={(e) => updateMapping(idx, { targetFolder: e.target.value })}
+                                            className="w-40 h-8 font-mono text-sm"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="px-6 py-3 border-t flex justify-end">
+                            <Button onClick={() => setShowMappingDialog(false)}>
+                                完成
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
