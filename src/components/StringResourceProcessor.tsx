@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { FolderOpen } from 'lucide-react'
+import { Analytics } from '@/lib/analytics'
 import {
     scanStringsFromDirectory,
     scanAllXmlFiles,
@@ -132,6 +133,7 @@ export function StringResourceProcessor() {
 
             const resDirs = await findAndroidResourceDirectories(rootHandle)
             setDiscoveredResDirs(resDirs)
+            Analytics.stringSelectProject(resDirs.length)
 
             if (resDirs.length === 0) {
                 setError('未在所选目录中找到 Android 资源目录 (src/main/res)')
@@ -168,6 +170,9 @@ export function StringResourceProcessor() {
             // Generate mappings from files, preserving existing rules
             const newMappings = generateMappingsFromFiles(files, mappings)
             setMappings(newMappings)
+
+            const totalEntries = files.reduce((sum, f) => sum + f.entries.size, 0)
+            Analytics.stringSelectSource(files.length, totalEntries)
 
             if (targetDirHandle) {
                 setStatus('ready')
@@ -206,6 +211,7 @@ export function StringResourceProcessor() {
                 setMappings(updatedMappings)
             }
 
+            Analytics.stringRefresh()
             setStatus('ready')
         } catch (err) {
             setError('刷新文件失败')
@@ -215,9 +221,13 @@ export function StringResourceProcessor() {
 
     // Toggle mapping enabled
     const toggleMapping = useCallback((index: number) => {
-        setMappings(prev => prev.map((m, i) =>
-            i === index ? { ...m, enabled: !m.enabled } : m
-        ))
+        setMappings(prev => {
+            const newEnabled = !prev[index].enabled
+            Analytics.stringToggleMapping(newEnabled)
+            return prev.map((m, i) =>
+                i === index ? { ...m, enabled: newEnabled } : m
+            )
+        })
     }, [])
 
     const toggleTempMapping = useCallback((index: number) => {
@@ -235,6 +245,7 @@ export function StringResourceProcessor() {
     const saveMappings = useCallback(() => {
         setMappings(tempMappings)
         setShowMappingDialog(false)
+        Analytics.stringSaveMappings(tempMappings.length)
     }, [tempMappings])
 
     // Reset a single mapping to its initial suggested values
@@ -243,6 +254,7 @@ export function StringResourceProcessor() {
             const m = prev[index]
             const sourceFile = sourceFiles.find(f => f.fileName === m.sourceFileName)
             if (sourceFile) {
+                Analytics.stringResetMapping('single')
                 return prev.map((item, i) =>
                     i === index ? {
                         ...item,
@@ -258,6 +270,7 @@ export function StringResourceProcessor() {
 
     // Reset all mappings to initial suggested values
     const resetAllTempMappings = useCallback(() => {
+        Analytics.stringResetMapping('all')
         setTempMappings(prev => prev.map(m => {
             const sourceFile = sourceFiles.find(f => f.fileName === m.sourceFileName)
             if (sourceFile) {
@@ -275,6 +288,7 @@ export function StringResourceProcessor() {
     // Handle import mappings
     const handleImportMappings = useCallback((config: LocaleMappingConfig) => {
         setMappings(config.mappings)
+        Analytics.stringImportMappings(config.mappings.length)
     }, [])
 
     // Execute merge with optional comment
@@ -320,6 +334,7 @@ export function StringResourceProcessor() {
         if (result.success) {
             // Set completion state, wait for user to click confirm
             setImportCompleted(true)
+            Analytics.stringImport(previewDetails.length, totalAdd, totalUpdate)
         } else {
             setError(result.error || '合并失败')
             setStatus('error')
@@ -390,6 +405,8 @@ export function StringResourceProcessor() {
         } else if (newIndex >= globalChanges.length) {
             newIndex = 0  // Wrap to first
         }
+
+        Analytics.stringNavigateDiff(delta > 0 ? 'next' : 'prev')
 
         const change = globalChanges[newIndex]
         setGlobalChangeIndex(newIndex)

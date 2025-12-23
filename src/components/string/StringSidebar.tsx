@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { AndroidResourceDir } from '@/types'
+import { Analytics } from '@/lib/analytics'
 
 interface StringSidebarProps {
     projectRootName: string | null
@@ -174,7 +175,11 @@ export function StringSidebar({
                                 <Checkbox
                                     id="replace-existing"
                                     checked={replaceExisting}
-                                    onCheckedChange={(checked) => onReplaceExistingChange(!!checked)}
+                                    onCheckedChange={(checked) => {
+                                        const newValue = !!checked
+                                        onReplaceExistingChange(newValue)
+                                        Analytics.stringToggleReplaceExisting(newValue)
+                                    }}
                                 />
                                 <Label htmlFor="replace-existing" className="text-sm cursor-pointer">
                                     替换已有字段
