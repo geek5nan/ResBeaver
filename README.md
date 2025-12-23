@@ -1,74 +1,98 @@
-# AssetScaler
+<p align="center">
+  <img src="public/logo.png" alt="ResBeaver Logo" width="200">
+</p>
 
-Multi-density asset generator for Android.
+<h1 align="center">ResBeaver</h1>
 
-🌐 **Live Demo**: [asset-scaler.pages.dev](https://asset-scaler.pages.dev)
+<p align="center">
+  <strong>Android 资源管理工具</strong><br>
+  图片多密度转换 · 字符串资源合并
+</p>
 
-## 使用说明
+<p align="center">
+  🌐 <a href="https://resbeaver.pages.dev">在线体验</a> · 
+  📄 <a href="./PROJECT_CONTEXT.md">项目上下文</a>
+</p>
 
-### 快速开始
+---
 
-1. **上传图片** - 拖拽 PNG/JPG/WebP 图片到上传区域，或点击选择文件
-2. **配置参数** - 在左侧面板设置输入倍数、压缩质量和输出目录
-3. **下载资源** - 点击下载按钮获取包含多密度资源的 ZIP 包
+## ✨ 功能特性
 
-### 参数说明
+### 🖼️ Drawable 处理器
 
-#### 输入图片倍数
-选择您的原始图片对应的密度：
-- **1x (mdpi)** - 原始 1 倍图，将生成 mdpi
-- **2x (xhdpi)** - 2 倍图，将生成 mdpi、hdpi、xhdpi
-- **3x (xxhdpi)** - 3 倍图（推荐），将生成 mdpi、hdpi、xhdpi、xxhdpi
-- **4x (xxxhdpi)** - 4 倍高清图，将生成全部 5 种密度
+一键生成 Android 多密度适配图片，告别手动切图。
 
-#### 编码模式
-- **Lossy (有损压缩)** - 文件体积更小，适合大多数场景
-- **Lossless (无损压缩)** - 保留原始画质，适合需要精确还原的场景
+| 功能 | 描述 |
+|------|------|
+| **多密度生成** | 自动生成 mdpi / hdpi / xhdpi / xxhdpi / xxxhdpi |
+| **WebP 编码** | 支持有损 (Lossy) 与无损 (Lossless) 压缩模式 |
+| **质量控制** | 可调节压缩质量/压缩力度 (0-100) |
+| **智能缩放** | 高质量采样算法，确保缩放后清晰度 |
+| **批量操作** | 支持文件重命名、一键下载 ZIP 包 |
 
-#### 压缩质量
-- Lossy 模式：10-100，建议 75-85 以平衡质量和体积
-- Lossless 模式：0-100，数值越高压缩越慢但文件更小
+### 📝 String 处理器
 
-#### 输出目录
-勾选需要生成的 Android drawable 目录：
-| 目录 | 密度比例 | 说明 |
-|------|---------|------|
-| drawable-mdpi | 1x | 中密度 (~160dpi) |
-| drawable-hdpi | 1.5x | 高密度 (~240dpi) |
-| drawable-xhdpi | 2x | 超高密度 (~320dpi) |
-| drawable-xxhdpi | 3x | 超超高密度 (~480dpi) |
-| drawable-xxxhdpi | 4x | 超超超高密度 (~640dpi) |
-| drawable | 1x | 通用目录（与 mdpi 相同） |
+Android 多语言 XML 资源的高效合并工具，解决翻译导入痛点。
 
-### 使用技巧
+| 功能 | 描述 |
+|------|------|
+| **项目扫描** | 自动识别 Android 项目中所有 `res` 目录与模块 |
+| **语言映射** | 灵活配置源文件 → 目标 `values-*` 目录的映射规则 |
+| **Diff 预览** | 精确到行的变更对比，支持键盘快捷导航 (N/P) |
+| **注释保留** | 智能合并算法，完整保留目标文件中的注释 |
+| **双模式合并** | 覆盖模式 / 仅新增模式，按需选择 |
+| **配置持久化** | 映射规则自动保存，支持导入/导出 JSON 配置 |
+| **本地写入** | 基于 File System Access API，直接写入本地项目 |
 
-- 🎯 **WebP 转换效果与 Android Studio 一致**，可直接用于项目开发
-- 📌 **建议使用 3x 或 4x 图片** 作为输入，以获得最佳的缩放质量
-- ✏️ **点击文件名旁的编辑图标** 可以修改输出文件名
-- 📦 **多文件统一下载** 会将所有图片合并到同一个 ZIP 包中
-- 💾 **配置自动保存** 到浏览器本地存储，下次使用无需重新设置
+---
 
-## Development
+## 📖 使用指南
+
+### Drawable 处理
+
+1. **上传图片** — 拖拽或点击上传 PNG/JPG/WebP (建议使用 3x 或 4x 高清图)
+2. **选择输入倍率** — 标注原图是几倍图
+3. **选择输出密度** — 勾选需要生成的 drawable 目录
+4. **调整编码参数** — 选择 Lossy/Lossless 模式，调整质量
+5. **下载** — 单个下载或批量下载 ZIP
+
+### String 处理
+
+1. **选择项目** — 指向 Android 工程根目录
+2. **选择翻译源** — 选择包含翻译 XML 文件的文件夹
+3. **配置映射** — 编辑源文件与目标 locale 的对应关系
+4. **预览变更** — 逐行检查 Diff，使用 N/P 快捷键导航
+5. **执行导入** — 确认无误后一键合并
+
+---
+
+## 🛠️ 技术栈
+
+| 类型 | 技术 |
+|------|------|
+| **框架** | React 18 + TypeScript + Vite |
+| **样式** | Tailwind CSS + Shadcn UI |
+| **图标** | Lucide Icons |
+| **图片处理** | WebAssembly (@aspect/webp) + Canvas API |
+| **文件操作** | File System Access API |
+
+---
+
+## 💻 本地开发
 
 ```bash
-# Install
+# 安装依赖
 npm install
 
-# Dev server
+# 启动开发服务器
 npm run dev
 
-# Build
+# 构建生产版本
 npm run build
 ```
 
-### Environment Variables
+---
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `VITE_GA_ID` | Google Analytics 4 Measurement ID | No |
-
-To enable Google Analytics, set `VITE_GA_ID` in your deployment platform (e.g., Cloudflare Pages, Vercel).
-
-## License
+## 📜 许可证
 
 MIT

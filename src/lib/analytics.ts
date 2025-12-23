@@ -75,4 +75,45 @@ export const Analytics = {
 
     /** User opened help dialog */
     openHelp: () => trackEvent('open_help'),
+
+    // String module events
+
+    /** User selected Android project directory */
+    stringSelectProject: (resDirCount: number) =>
+        trackEvent('string_select_project', { res_dir_count: resDirCount }),
+
+    /** User selected translation source directory */
+    stringSelectSource: (fileCount: number, entryCount: number) =>
+        trackEvent('string_select_source', { file_count: fileCount, entry_count: entryCount }),
+
+    /** User refreshed files */
+    stringRefresh: () => trackEvent('string_refresh'),
+
+    /** User toggled mapping enabled status */
+    stringToggleMapping: (enabled: boolean) =>
+        trackEvent('string_toggle_mapping', { enabled }),
+
+    /** User saved mapping settings */
+    stringSaveMappings: (mappingCount: number) =>
+        trackEvent('string_save_mappings', { mapping_count: mappingCount }),
+
+    /** User reset mapping(s) */
+    stringResetMapping: (resetType: 'single' | 'all') =>
+        trackEvent('string_reset_mapping', { reset_type: resetType }),
+
+    /** User toggled replace existing option */
+    stringToggleReplaceExisting: (enabled: boolean) =>
+        trackEvent('string_toggle_replace_existing', { enabled }),
+
+    /** User executed string import */
+    stringImport: (localeCount: number, addCount: number, updateCount: number) =>
+        trackEvent('string_import', { locale_count: localeCount, add_count: addCount, update_count: updateCount }),
+
+    /** User imported mapping config file */
+    stringImportMappings: (mappingCount: number) =>
+        trackEvent('string_import_mappings', { mapping_count: mappingCount }),
+
+    /** User navigated diff changes */
+    stringNavigateDiff: (direction: 'prev' | 'next') =>
+        trackEvent('string_navigate_diff', { direction }),
 }
