@@ -16,7 +16,7 @@ interface StringSidebarProps {
     onSelectSourceDir: () => void
     onLoadResDirectory: (dir: AndroidResourceDir) => void
     onShowModuleDialog: () => void
-    onSetReplaceExisting: (replace: boolean) => void
+    onReplaceExistingChange: (replace: boolean) => void
 }
 
 const MAX_VISIBLE_MODULES = 4
@@ -33,7 +33,7 @@ export function StringSidebar({
     onSelectSourceDir,
     onLoadResDirectory,
     onShowModuleDialog,
-    onSetReplaceExisting
+    onReplaceExistingChange
 }: StringSidebarProps) {
     const visibleModules = discoveredResDirs.slice(0, MAX_VISIBLE_MODULES)
     const hasMoreModules = discoveredResDirs.length > MAX_VISIBLE_MODULES
@@ -128,7 +128,7 @@ export function StringSidebar({
                                 <Checkbox
                                     id="replace-existing"
                                     checked={replaceExisting}
-                                    onCheckedChange={(checked) => onSetReplaceExisting(!!checked)}
+                                    onCheckedChange={(checked) => onReplaceExistingChange(!!checked)}
                                 />
                                 <Label htmlFor="replace-existing" className="text-sm cursor-pointer">
                                     替换已有字段

@@ -167,15 +167,15 @@ function App() {
                       <ol className="space-y-3 text-slate-600 leading-relaxed font-medium">
                         <li className="flex gap-3">
                           <span className="text-primary">•</span>
-                          <span><strong>选择项目</strong>: 指向 Android 工程根目录（需识别 <code>src/main/res</code>）。</span>
+                          <span><strong>选择项目</strong>: 指向 Android 工程根目录（自动识别模块）。</span>
                         </li>
                         <li className="flex gap-3">
                           <span className="text-primary">•</span>
-                          <span><strong>翻译文件夹</strong>: 选择包含翻译资源的文件夹（支持识别文件名中的 Locale）。</span>
+                          <span><strong>选择翻译</strong>: 选择包含翻译资源的文件夹（支持识别文件名中的 Locale）。</span>
                         </li>
                         <li className="flex gap-3">
                           <span className="text-primary">•</span>
-                          <span><strong>差异预览</strong>: 在中间列表切换语言，右侧实时显示 XML 代码行级的 Diff。</span>
+                          <span><strong>差异预览</strong>: 在预览列表切换，右侧实时查看 Diff。</span>
                         </li>
                         <li className="flex gap-3">
                           <span className="text-primary">•</span>
@@ -191,7 +191,7 @@ function App() {
                       <ul className="space-y-2.5 text-xs text-slate-600">
                         <li className="flex items-start gap-2">
                           <span className="text-amber-500 font-bold">🔗</span>
-                          <span><strong>映射规则</strong>: 支持导出/导入 JSON 规则配置，方便在多团队间同步 Locale 映射。</span>
+                          <span><strong>映射规则</strong>: 支持导出/导入 JSON 规则配置，方便在团队间同步 Locale 映射。</span>
                         </li>
                         <li className="flex items-start gap-2">
                           <span className="text-purple-500 font-bold">💬</span>

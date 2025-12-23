@@ -50,6 +50,7 @@ export function Sidebar({ config, onChange }: SidebarProps) {
                         }}
                         className="grid grid-cols-2 gap-2"
                     >
+                        {/* ... existing input scale section ... */}
                         {[
                             { value: '1', label: '1x', desc: 'mdpi' },
                             { value: '2', label: '2x', desc: 'xhdpi' },
@@ -72,7 +73,7 @@ export function Sidebar({ config, onChange }: SidebarProps) {
                                     Analytics.changeInputScale(newScale)
                                 }}
                             >
-                                <RadioGroupItem value={value} id={`r${value}`} className="sr-only" />
+                                <RadioGroupItem value={value} id={`scale-${value}`} className="sr-only" />
                                 <span className="font-semibold">{label}</span>
                                 <span className="text-xs text-muted-foreground">{desc}</span>
                             </div>

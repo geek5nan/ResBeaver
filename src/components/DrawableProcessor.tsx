@@ -328,7 +328,7 @@ export function DrawableProcessor() {
                     downloadingId={downloadingId}
                     onRemove={removeFile}
                     onStartEdit={startEditing}
-                    onUpdateOutputName={updateOutputName}
+                    onNameChange={updateOutputName}
                     onFinishEdit={finishEditing}
                     onDownload={downloadFile}
                 />

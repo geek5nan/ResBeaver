@@ -8,10 +8,10 @@ import { ProcessingFile } from '@/types'
 interface FileListProps {
     files: ProcessingFile[]
     downloadingId: string | null
-    onRemove: (id: string) => void
-    onStartEdit: (id: string) => void
-    onUpdateOutputName: (id: string, name: string) => void
-    onFinishEdit: (id: string) => void
+    onRemove: (fileId: string) => void
+    onStartEdit: (fileId: string) => void
+    onNameChange: (fileId: string, newName: string) => void
+    onFinishEdit: (fileId: string) => void
     onDownload: (file: ProcessingFile) => void
 }
 
@@ -20,7 +20,7 @@ export function FileList({
     downloadingId,
     onRemove,
     onStartEdit,
-    onUpdateOutputName,
+    onNameChange,
     onFinishEdit,
     onDownload
 }: FileListProps) {
@@ -47,7 +47,7 @@ export function FileList({
                                 <div className="flex items-center gap-2 mb-1">
                                     <Input
                                         value={file.outputName}
-                                        onChange={(e) => onUpdateOutputName(file.id, e.target.value)}
+                                        onChange={(e) => onNameChange(file.id, e.target.value)}
                                         className="h-7 text-sm"
                                         autoFocus
                                         onBlur={() => onFinishEdit(file.id)}

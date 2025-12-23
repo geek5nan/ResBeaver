@@ -350,7 +350,7 @@ export function StringResourceProcessor() {
                 onSelectSourceDir={selectSourceDir}
                 onLoadResDirectory={loadResDirectory}
                 onShowModuleDialog={() => setShowModuleDialog(true)}
-                onSetReplaceExisting={setReplaceExisting}
+                onReplaceExistingChange={setReplaceExisting}
             />
 
             <main className="flex-1 flex flex-col overflow-hidden bg-slate-50">
