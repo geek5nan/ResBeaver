@@ -16,18 +16,28 @@ interface DiffPreviewProps {
 
 // Syntax highlight XML content
 function highlightXml(content: string, baseColor: string): React.ReactNode {
-    // Match XML string elements: <string name="key">value</string>
-    const stringMatch = content.match(/^(\s*)(<string\s+)(name=")([^"]+)(")(>)(.*)(<\/string>)(.*)$/)
+    // Trim trailing whitespace (handles \r from Windows line endings)
+    const trimmedContent = content.trimEnd()
+
+    // Match XML string elements: <string name="key">value</string> or with other attributes
+    // Captures: indent, <string, name="key", optional attrs, >, value, </string>, trailing
+    const stringMatch = trimmedContent.match(/^(\s*)(<string\s+)(name=")([^"]+)("(?:\s+[^>]*)?)(>)(.*)(<\/string>)(.*)$/)
+
+    // DEBUG: Log for add lines (green background uses text-green-700)
+    if (baseColor === 'text-green-700' && content.includes('<string')) {
+        console.log('[DEBUG] Add line content:', JSON.stringify(content))
+        console.log('[DEBUG] Regex match result:', stringMatch ? 'MATCHED' : 'NO MATCH')
+    }
 
     if (stringMatch) {
-        const [, indent, openTag, nameAttr, keyValue, closeQuote, gt, textContent, closeTag, trailing] = stringMatch
+        const [, indent, openTag, nameAttr, keyValue, attrsAndQuote, gt, textContent, closeTag, trailing] = stringMatch
         return (
             <>
                 <span>{indent}</span>
                 <span className="text-cyan-600">{openTag}</span>
                 <span className="text-purple-600">{nameAttr}</span>
                 <span className="text-amber-600">{keyValue}</span>
-                <span className="text-purple-600">{closeQuote}</span>
+                <span className="text-purple-600">{attrsAndQuote}</span>
                 <span className="text-cyan-600">{gt}</span>
                 <span className={baseColor}>{textContent}</span>
                 <span className="text-cyan-600">{closeTag}</span>
@@ -37,13 +47,13 @@ function highlightXml(content: string, baseColor: string): React.ReactNode {
     }
 
     // Match XML comments: <!-- ... -->
-    const commentMatch = content.match(/^(\s*)(<!--.*)$/)
+    const commentMatch = content.match(/^(\s*)(<![^>]*>?.*)$/)
     if (commentMatch) {
         return <span className="text-slate-400 italic">{content}</span>
     }
 
     // Match other XML tags: <resources>, </resources>, <?xml ...?>
-    const tagMatch = content.match(/^(\s*)(<\/?[a-zA-Z][^>]*>?)(.*)$/)
+    const tagMatch = content.match(/^(\s*)(<\/?[a-zA-Z?][^>]*>?)(.*)$/)
     if (tagMatch) {
         const [, indent, tag, rest] = tagMatch
         return (
