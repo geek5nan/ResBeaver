@@ -1,0 +1,187 @@
+{
+    "common": {
+        "help": "Usage Guide",
+        "helpDesc": "Learn how to use ResBeaver efficiently",
+        "gotIt": "Got It",
+        "refresh": "Refresh",
+        "download": "Download",
+        "batchDownload": "Batch Download",
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success",
+        "cancel": "Cancel",
+        "confirm": "Confirm"
+    },
+    "nav": {
+        "drawable": "Drawable Resources",
+        "string": "String Resources"
+    },
+    "drawable": {
+        "title": "Drawable Resource Processor",
+        "uploadArea": "Click or drag images here to upload",
+        "uploadBatch": "Supports batch upload",
+        "dropToUpload": "Drop to start upload",
+        "noFiles": "No files, please upload images",
+        "processing": "Processing",
+        "ready": "Ready",
+        "settings": "Configuration",
+        "input": "Input",
+        "output": "Output",
+        "inputScale": "Input Image Scale",
+        "encodingMode": "Encoding Mode",
+        "lossy": "Lossy",
+        "lossyDesc": "Smaller file size",
+        "lossless": "Lossless",
+        "losslessDesc": "Perfect quality",
+        "quality": "WebP Quality",
+        "compression": "Compression Effort",
+        "compressionDesc": "0 = fastest, 100 = smallest file",
+        "outputDir": "Output Directory",
+        "nightMode": "Night Mode",
+        "nightModeDesc": "Generate night-mode directories for all selected densities",
+        "format": "Output Format",
+        "densities": "Target Densities",
+        "rename": "Rename",
+        "universal": "Universal",
+        "clearAll": "Clear List",
+        "downloadAll": "Download All",
+        "totalFiles": "{{count}} files total",
+        "convertFailed": "Conversion failed",
+        "loadFailed": "Failed to load image",
+        "help": {
+            "quickStart": "Quick Start",
+            "upload": {
+                "title": "Upload Images",
+                "desc": "Drag & drop PNG/JPG/WebP images to the upload area, or click to select files. Supports batch upload."
+            },
+            "config": {
+                "title": "Configuration",
+                "desc": "Set input scale (suggested 3x/4x) and compression quality in the sidebar."
+            },
+            "download": {
+                "title": "Get Resources",
+                "desc": "Click individual 'Download' or bottom 'Download All' to get the multi-density ZIP package."
+            },
+            "tips": {
+                "title": "💡 Pro Tips",
+                "studio": {
+                    "bold": "Same quality as Android Studio WebP conversion",
+                    "text": ", ready for production use."
+                },
+                "rename": {
+                    "bold": "Rename",
+                    "text": ": Click the edit icon next to the filename to quickly change the output name."
+                },
+                "autoSave": {
+                    "bold": "Auto Save",
+                    "text": ": Your configuration is saved automatically and will persist on your next visit."
+                }
+            }
+        }
+    },
+    "string": {
+        "title": "String Resource Processor",
+        "project": "Project",
+        "selectProject": "Select Project",
+        "selectAndroidProject": "Select Android Project",
+        "moduleSelection": "Module Selection",
+        "searchOrSelectModule": "Search or select module...",
+        "noMatchingModule": "No matching module found",
+        "strings": "Strings",
+        "selectSource": "Select Translations",
+        "selectTranslationDir": "Select translation directory",
+        "filesAndEntries": "{{fileCount}} files, {{entryCount}} entries",
+        "mergeOptions": "Merge Options",
+        "replaceExisting": "Replace existing fields",
+        "replaceExistingDesc": "Overwrite existing keys in target",
+        "skipExistingDesc": "Skip existing keys in target",
+        "importRules": "Import Rules",
+        "showChangesOnly": "Changes only",
+        "showAll": "Show all",
+        "exportJson": "Export JSON",
+        "importJson": "Import JSON",
+        "settings": "Settings",
+        "newFile": "New",
+        "merge": "Start Import",
+        "preview": "Diff Preview",
+        "mappings": "Mapping Rules",
+        "step1": "Select Project Directory",
+        "step2": "Select Translation Directory",
+        "noProject": "First, select the Android project directory",
+        "noSource": "Then, select the directory containing translation files",
+        "readyDesc": "Preview changes after configuring mappings",
+        "refresh": "Refresh files",
+        "totalLocales": "{{count}} languages",
+        "added": "added",
+        "updated": "updated",
+        "confirmImport": "Confirm Import",
+        "importSummary": "Ready to import {{localeCount}} languages · +{{totalAdd}} added · ~{{totalUpdate}} updated",
+        "importComment": "Import Comment (optional)",
+        "importCommentPlaceHolder": "Type a comment here",
+        "importCommentDesc": "This comment will be added as a note before the imported entries",
+        "processing": "Processing",
+        "importCompleted": "Import Completed",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "importing": "Importing...",
+        "editImportRules": "Edit Import Rules",
+        "resetAll": "Reset All",
+        "resetAllTitle": "Restore all suggested mappings",
+        "resetOneTitle": "Restore suggested value",
+        "target": "Target",
+        "saveConfig": "Save Config",
+        "noPreview": "Select a language to see preview",
+        "noContent": "No content",
+        "importPreview": "Import Preview",
+        "clickToSwitchPath": "Click to switch path",
+        "prevChange": "Previous change",
+        "nextChange": "Next change",
+        "noChangesDesc": "No changes for this language, showing current file content",
+        "mergeSuccess": "Merge completed! Explore the target directory.",
+        "readTargetFailed": "Failed to read target resources",
+        "noResDirFound": "No Android resource directory found (src/main/res)",
+        "selectProjectFailed": "Failed to select project",
+        "selectSourceFailed": "Failed to select directory",
+        "refreshFailed": "Failed to refresh files",
+        "mergeFailed": "Merge failed",
+        "notSupported": "Browser not supported",
+        "notSupportedDesc": "File System Access API is only supported in Chrome and Edge.",
+        "startConfig": "Start Configuration",
+        "step1Desc": "First, select the Android project directory",
+        "step2Desc": "Then, select the directory containing the translation files",
+        "help": {
+            "workflow": "Workflow",
+            "step1": {
+                "bold": "Select Project",
+                "text": ": Point to the Android project root directory (auto-identifies modules)."
+            },
+            "step2": {
+                "bold": "Select Translation",
+                "text": ": Select the folder containing translation resources (auto-detects Locale from filenames)."
+            },
+            "step3": {
+                "bold": "Diff Preview",
+                "text": ": Switch between preview lists to view line-by-line Diff in real-time."
+            },
+            "step4": {
+                "bold": "Safe Import",
+                "text": ": Click 'Start Import', ResBeaver will intelligently merge strings and write directly to disk."
+            },
+            "advanced": {
+                "title": "🛠️ Advanced Features",
+                "mapping": {
+                    "bold": "Mapping Rules",
+                    "text": ": Export/Import JSON configurations for easy sharing of Locale mappings within teams."
+                },
+                "comments": {
+                    "bold": "Comment Preservation",
+                    "text": ": Intelligently identifies XML comments and automatically preserves document structure during merge."
+                },
+                "modules": {
+                    "bold": "Module Support",
+                    "text": ": Automatically detects multi-module projects and allows seamless switching between them."
+                }
+            }
+        }
+    }
+}

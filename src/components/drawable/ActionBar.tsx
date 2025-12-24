@@ -1,4 +1,5 @@
 import { Download, Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 
 interface ActionBarProps {
@@ -16,21 +17,24 @@ export function ActionBar({
     onClearAll,
     onDownloadAll
 }: ActionBarProps) {
+    const { t } = useTranslation()
+
     return (
         <div className="flex-shrink-0 border-t bg-white px-6 py-3 flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-                {processingCount > 0 && `${processingCount} 个处理中 · `}
-                {readyCount > 0 && `${readyCount} 个待下载`}
-            </p>
+            <div className="text-sm text-muted-foreground">
+                {processingCount > 0 && `${processingCount} processing · `}
+                {readyCount > 0 && t('drawable.totalFiles', { count: readyCount })}
+            </div>
             <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={onClearAll}>清空全部</Button>
+                <Button variant="outline" size="sm" onClick={onClearAll}>{t('drawable.clearAll')}</Button>
                 {readyCount > 0 && (
                     <Button size="sm" onClick={onDownloadAll} disabled={downloadingId === 'all'}>
                         {downloadingId === 'all' ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
-                        全部下载
+                        {t('drawable.downloadAll')}
                     </Button>
                 )}
             </div>
         </div>
     )
 }
+

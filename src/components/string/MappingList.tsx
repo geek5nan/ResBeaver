@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { Download, Upload, Settings2, Pencil, Filter } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
@@ -27,6 +28,7 @@ export function MappingList({
     onOpenSettings,
     onEditItem
 }: MappingListProps) {
+    const { t } = useTranslation()
     const importInputRef = useRef<HTMLInputElement>(null)
     const [showChangesOnly, setShowChangesOnly] = useState(false)
 
@@ -64,7 +66,7 @@ export function MappingList({
     if (mappings.length === 0) {
         return (
             <div className="h-full flex items-center justify-center text-muted-foreground bg-slate-50 rounded-lg border border-dashed">
-                <p className="text-sm">请先选择翻译文件夹</p>
+                <p className="text-sm">{t('string.selectTranslationDir')}</p>
             </div>
         )
     }
@@ -73,24 +75,24 @@ export function MappingList({
         <div className="h-full flex flex-col bg-white rounded-lg border overflow-hidden">
             {/* Header with toolbar */}
             <div className="px-4 py-2 border-b bg-slate-50 flex items-center justify-between flex-shrink-0">
-                <span className="text-sm font-medium">导入规则</span>
+                <span className="text-sm font-medium">{t('string.importRules')}</span>
                 <div className="flex items-center gap-1">
                     <Button
                         variant={showChangesOnly ? "default" : "ghost"}
                         size="sm"
                         className="h-7 px-2 text-xs"
                         onClick={() => setShowChangesOnly(!showChangesOnly)}
-                        title={showChangesOnly ? "显示全部" : "仅显示变更"}
+                        title={showChangesOnly ? t('string.showAll') : t('string.showChangesOnly')}
                     >
                         <Filter className="h-3.5 w-3.5 mr-1" />
-                        {showChangesOnly ? '变更' : '全部'}
+                        {showChangesOnly ? t('string.showChangesOnly') : t('string.showAll')}
                     </Button>
                     <Button
                         variant="ghost"
                         size="sm"
                         className="h-7 w-7 p-0"
                         onClick={handleExport}
-                        title="导出 JSON"
+                        title={t('string.exportJson')}
                     >
                         <Download className="h-3.5 w-3.5" />
                     </Button>
@@ -99,7 +101,7 @@ export function MappingList({
                         size="sm"
                         className="h-7 w-7 p-0"
                         onClick={() => importInputRef.current?.click()}
-                        title="导入 JSON"
+                        title={t('string.importJson')}
                     >
                         <Upload className="h-3.5 w-3.5" />
                     </Button>
@@ -107,7 +109,7 @@ export function MappingList({
                         variant="ghost"
                         size="sm"
                         className="h-7 w-7 p-0"
-                        title="设置"
+                        title={t('string.settings')}
                         onClick={onOpenSettings}
                     >
                         <Settings2 className="h-3.5 w-3.5" />
@@ -160,7 +162,7 @@ export function MappingList({
                                         <div className="flex items-center gap-1.5 text-xs flex-shrink-0">
                                             {preview.isNewFile ? (
                                                 <Badge variant="secondary" className="text-[10px] h-5">
-                                                    新建
+                                                    {t('string.newFile')}
                                                 </Badge>
                                             ) : (
                                                 <>
@@ -206,3 +208,4 @@ export function MappingList({
         </div>
     )
 }
+

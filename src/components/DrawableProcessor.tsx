@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ConvertConfig, ProcessingFile, ConvertedImage } from '@/types'
 import { saveConfig, loadConfig, getDefaultConfig } from '@/lib/storage'
 import { createImageFile, resizeImage, canvasToWebP, calculateDensities } from '@/lib/imageUtils'
@@ -12,6 +13,7 @@ import { FileList } from './drawable/FileList'
 import { ActionBar } from './drawable/ActionBar'
 
 export function DrawableProcessor() {
+    const { t } = useTranslation()
     const [files, setFiles] = useState<ProcessingFile[]>([])
     const [config, setConfig] = useState<ConvertConfig>(getDefaultConfig())
     const [isDragging, setIsDragging] = useState(false)
@@ -202,7 +204,7 @@ export function DrawableProcessor() {
                         resolve()
                     } catch (error) { reject(error) }
                 }
-                img.onerror = () => reject(new Error('Failed to load image'))
+                img.onerror = () => reject(new Error(t('drawable.loadFailed')))
             })
 
             setFiles(prev => prev.map(f =>
@@ -225,12 +227,12 @@ export function DrawableProcessor() {
             Analytics.downloadAssets(1, 'single')
         } catch (error) {
             setFiles(prev => prev.map(f =>
-                f.id === file.id ? { ...f, status: 'error' as const, error: '转换失败' } : f
+                f.id === file.id ? { ...f, status: 'error' as const, error: t('drawable.convertFailed') } : f
             ))
         } finally {
             setDownloadingId(null)
         }
-    }, [config])
+    }, [config, t])
 
     const downloadAll = useCallback(async () => {
         const readyFiles = files.filter(f => f.status === 'ready')
@@ -280,7 +282,7 @@ export function DrawableProcessor() {
                             resolve()
                         } catch (error) { reject(error) }
                     }
-                    img.onerror = () => reject(new Error('Failed to load image'))
+                    img.onerror = () => reject(new Error(t('drawable.loadFailed')))
                 })
 
                 setFiles(prev => prev.map(f =>
@@ -308,7 +310,7 @@ export function DrawableProcessor() {
         } finally {
             setDownloadingId(null)
         }
-    }, [files, downloadFile, config])
+    }, [files, downloadFile, config, t])
 
     const clearAll = useCallback(() => {
         files.forEach(file => URL.revokeObjectURL(file.preview))
@@ -361,3 +363,4 @@ export function DrawableProcessor() {
         </div>
     )
 }
+

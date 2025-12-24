@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react'
 import { X, RotateCcw } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -29,6 +30,7 @@ export function MappingEditorDialog({
     onResetAll,
     onSave
 }: MappingEditorDialogProps) {
+    const { t } = useTranslation()
     const dialogListRef = useRef<HTMLDivElement>(null)
     const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
@@ -56,17 +58,17 @@ export function MappingEditorDialog({
             />
             <div className="relative bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[80vh] flex flex-col">
                 <div className="px-6 py-4 border-b flex items-center justify-between">
-                    <h2 className="text-lg font-semibold">编辑导入规则</h2>
+                    <h2 className="text-lg font-semibold">{t('string.editImportRules')}</h2>
                     <div className="flex items-center gap-2">
                         <Button
                             variant="ghost"
                             size="sm"
                             className="h-8 px-2 text-xs text-slate-500 hover:text-primary"
                             onClick={onResetAll}
-                            title="恢复全部分配建议"
+                            title={t('string.resetAllTitle')}
                         >
                             <RotateCcw className="h-3.5 w-3.5 mr-1" />
-                            全部重置
+                            {t('string.resetAll')}
                         </Button>
                         <Button
                             variant="ghost"
@@ -98,7 +100,7 @@ export function MappingEditorDialog({
                                 </span>
                             </div>
                             <div className="flex items-center gap-2 ml-7">
-                                <Label className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">目标:</Label>
+                                <Label className="text-[11px] uppercase tracking-wider text-slate-400 font-bold">{t('string.target')}:</Label>
                                 <Input
                                     ref={el => inputRefs.current[idx] = el}
                                     value={m.targetFolder}
@@ -115,7 +117,7 @@ export function MappingEditorDialog({
                                     size="sm"
                                     className="h-9 w-9 p-0 text-slate-400 hover:text-primary"
                                     onClick={() => onResetOne(idx)}
-                                    title="恢复建议值"
+                                    title={t('string.resetOneTitle')}
                                 >
                                     <RotateCcw className="h-3.5 w-3.5" />
                                 </Button>
@@ -124,10 +126,11 @@ export function MappingEditorDialog({
                     ))}
                 </div>
                 <div className="px-6 py-4 border-t flex justify-end gap-3">
-                    <Button variant="outline" onClick={onClose}>取消</Button>
-                    <Button onClick={onSave}>保存配置</Button>
+                    <Button variant="outline" onClick={onClose}>{t('string.cancel')}</Button>
+                    <Button onClick={onSave}>{t('string.saveConfig')}</Button>
                 </div>
             </div>
         </div>
     )
 }
+

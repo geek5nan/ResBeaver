@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { FolderOpen } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Analytics } from '@/lib/analytics'
 import {
     scanStringsFromDirectory,
@@ -34,6 +35,8 @@ import { MappingEditorDialog } from './string/MappingEditorDialog'
 import { ImportConfirmationDialog } from './string/ImportConfirmationDialog'
 
 export function StringResourceProcessor() {
+    const { t } = useTranslation()
+
     // Project state
     const [projectRootName, setProjectRootName] = useState<string | null>(null)
     const [discoveredResDirs, setDiscoveredResDirs] = useState<AndroidResourceDir[]>([])
@@ -118,10 +121,10 @@ export function StringResourceProcessor() {
             setTargetResources(resources)
             setStatus(sourceFiles.length > 0 ? 'ready' : 'idle')
         } catch {
-            setError('读取目标资源失败')
+            setError(t('string.readTargetFailed'))
             setStatus('error')
         }
-    }, [sourceFiles.length])
+    }, [sourceFiles.length, t])
 
     // Select project directory (Step 1)
     const selectProjectDir = useCallback(async () => {
@@ -136,7 +139,7 @@ export function StringResourceProcessor() {
             Analytics.stringSelectProject(resDirs.length)
 
             if (resDirs.length === 0) {
-                setError('未在所选目录中找到 Android 资源目录 (src/main/res)')
+                setError(t('string.noResDirFound'))
                 setStatus('error')
             } else if (resDirs.length === 1) {
                 await loadResDirectory(resDirs[0])
@@ -150,11 +153,11 @@ export function StringResourceProcessor() {
             }
         } catch (err) {
             if ((err as Error).name !== 'AbortError') {
-                setError('选择项目失败')
+                setError(t('string.selectProjectFailed'))
                 setStatus('error')
             }
         }
-    }, [loadResDirectory])
+    }, [loadResDirectory, t])
 
     // Select source directory (Step 2)
     const selectSourceDir = useCallback(async () => {
@@ -181,11 +184,11 @@ export function StringResourceProcessor() {
             }
         } catch (err) {
             if ((err as Error).name !== 'AbortError') {
-                setError('选择目录失败')
+                setError(t('string.selectSourceFailed'))
                 setStatus('error')
             }
         }
-    }, [targetDirHandle, mappings])
+    }, [targetDirHandle, mappings, t])
 
     // Refresh all files
     const handleRefresh = useCallback(async () => {
@@ -214,10 +217,10 @@ export function StringResourceProcessor() {
             Analytics.stringRefresh()
             setStatus('ready')
         } catch (err) {
-            setError('刷新文件失败')
+            setError(t('string.refreshFailed'))
             setStatus('error')
         }
-    }, [targetDirHandle, sourceDirHandle, mappings])
+    }, [targetDirHandle, sourceDirHandle, mappings, t])
 
     // Toggle mapping enabled
     const toggleMapping = useCallback((index: number) => {
@@ -291,6 +294,13 @@ export function StringResourceProcessor() {
         Analytics.stringImportMappings(config.mappings.length)
     }, [])
 
+    // Get enabled mappings and data for summary
+    const enabledMappings = mappings.filter(m => m.enabled)
+    const totalSourceEntries = enabledMappings.reduce((sum, m) => sum + (m.entryCount || 0), 0)
+    const selectedPreview = previewDetails.find(p => p.locale === selectedLocale) || null
+    const totalAdd = previewDetails.reduce((sum, p) => sum + p.addCount, 0)
+    const totalUpdate = previewDetails.reduce((sum, p) => sum + p.overwriteCount, 0)
+
     // Execute merge with optional comment
     const handleMerge = useCallback(async (comment?: string) => {
         if (!targetDirHandle || sourceFiles.length === 0) return
@@ -336,10 +346,10 @@ export function StringResourceProcessor() {
             setImportCompleted(true)
             Analytics.stringImport(previewDetails.length, totalAdd, totalUpdate)
         } else {
-            setError(result.error || '合并失败')
+            setError(result.error || t('string.mergeFailed'))
             setStatus('error')
         }
-    }, [targetDirHandle, sourceFiles, mappings, targetResources, replaceExisting])
+    }, [targetDirHandle, sourceFiles, mappings, targetResources, replaceExisting, t, previewDetails.length, totalAdd, totalUpdate])
 
     // Handle import completion confirmation
     const handleImportConfirm = useCallback(async () => {
@@ -373,13 +383,6 @@ export function StringResourceProcessor() {
         window.addEventListener('keydown', handleKeyDown)
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [showMappingDialog, showImportDialog, importCompleted, status, handleImportConfirm])
-
-    // Get enabled mappings and data for summary
-    const enabledMappings = mappings.filter(m => m.enabled)
-    const totalSourceEntries = enabledMappings.reduce((sum, m) => sum + (m.entryCount || 0), 0)
-    const selectedPreview = previewDetails.find(p => p.locale === selectedLocale) || null
-    const totalAdd = previewDetails.reduce((sum, p) => sum + p.addCount, 0)
-    const totalUpdate = previewDetails.reduce((sum, p) => sum + p.overwriteCount, 0)
 
     // Flat list of all changes for cross-file navigation
     const globalChanges = useMemo(() => {
@@ -455,9 +458,9 @@ export function StringResourceProcessor() {
         return (
             <div className="flex-1 flex items-center justify-center p-6">
                 <div className="text-center max-w-md">
-                    <h2 className="text-lg font-semibold mb-2">浏览器不支持</h2>
+                    <h2 className="text-lg font-semibold mb-2">{t('string.notSupported')}</h2>
                     <p className="text-muted-foreground">
-                        File System Access API 仅支持 Chrome 和 Edge 浏览器。
+                        {t('string.notSupportedDesc')}
                     </p>
                 </div>
             </div>
@@ -523,13 +526,13 @@ export function StringResourceProcessor() {
                         <div className="flex-1 flex items-center justify-center">
                             <div className="text-center max-w-md">
                                 <FolderOpen className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                                <h2 className="text-lg font-medium text-slate-600 mb-2">开始配置</h2>
+                                <h2 className="text-lg font-medium text-slate-600 mb-2">{t('string.startConfig')}</h2>
                                 <p className="text-sm text-muted-foreground">
                                     {!projectRootName
-                                        ? '首先选择 Android 项目目录'
+                                        ? t('string.step1Desc')
                                         : !sourceDirHandle
-                                            ? '然后选择包含翻译文件的目录'
-                                            : '配置映射关系后即可预览变更'
+                                            ? t('string.step2Desc')
+                                            : t('string.readyDesc')
                                     }
                                 </p>
                             </div>
@@ -585,3 +588,4 @@ export function StringResourceProcessor() {
         </div>
     )
 }
+

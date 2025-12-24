@@ -1,0 +1,187 @@
+{
+    "common": {
+        "help": "使用说明",
+        "helpDesc": "了解如何高效使用 ResBeaver",
+        "gotIt": "我已了解",
+        "refresh": "刷新",
+        "download": "下载",
+        "batchDownload": "统一下载",
+        "loading": "加载中...",
+        "error": "错误",
+        "success": "成功",
+        "cancel": "取消",
+        "confirm": "确定"
+    },
+    "nav": {
+        "drawable": "图片资源",
+        "string": "字符串资源"
+    },
+    "drawable": {
+        "title": "图片资源处理器",
+        "uploadArea": "点击或拖拽图片到此处上传",
+        "uploadBatch": "支持批量上传",
+        "dropToUpload": "松开以开始上传",
+        "noFiles": "暂无文件，请上传图片",
+        "processing": "处理中",
+        "ready": "待下载",
+        "settings": "配置参数",
+        "input": "输入",
+        "output": "输出",
+        "inputScale": "输入图片倍数",
+        "encodingMode": "编码模式",
+        "lossy": "Lossy (有损压缩)",
+        "lossyDesc": "文件更小",
+        "lossless": "Lossless (无损压缩)",
+        "losslessDesc": "保留原始质量",
+        "quality": "WebP 质量",
+        "compression": "压缩力度",
+        "compressionDesc": "0 = 最快压缩，100 = 最小文件",
+        "outputDir": "输出目录",
+        "nightMode": "暗黑模式目录",
+        "nightModeDesc": "将会为所有选中的目录生成对应的 night 目录",
+        "format": "输出格式",
+        "densities": "输出密度",
+        "rename": "重命名",
+        "universal": "通用",
+        "clearAll": "清空列表",
+        "downloadAll": "统一下载",
+        "totalFiles": "共 {{count}} 个文件",
+        "convertFailed": "转换失败",
+        "loadFailed": "加载图片失败",
+        "help": {
+            "quickStart": "快速开始",
+            "upload": {
+                "title": "上传图片",
+                "desc": "拖拽 PNG/JPG/WebP 图片到上传区域，或点击选择文件。支持批量上传。"
+            },
+            "config": {
+                "title": "配置参数",
+                "desc": "在左侧面板设置输入倍数（建议 3x/4x）、压缩质量。"
+            },
+            "download": {
+                "title": "获取资源",
+                "desc": "点击单个“下载”或底部“统一下载”获取多密度资源 ZIP 包。"
+            },
+            "tips": {
+                "title": "💡 使用技巧",
+                "studio": {
+                    "bold": "WebP 转换效果与 Android Studio 一致",
+                    "text": "，可直接用于生产项目。"
+                },
+                "rename": {
+                    "bold": "重命名",
+                    "text": ": 点击文件名旁的编辑图标可快速修改输出文件名。"
+                },
+                "autoSave": {
+                    "bold": "自动保存",
+                    "text": ": 您的配置会自动保存，下次打开页面即刻沿用。"
+                }
+            }
+        }
+    },
+    "string": {
+        "title": "字符串资源处理器",
+        "project": "项目",
+        "selectProject": "选择项目",
+        "selectAndroidProject": "选择 Android 项目",
+        "moduleSelection": "模块选择",
+        "searchOrSelectModule": "搜索或选择模块...",
+        "noMatchingModule": "未找到匹配模块",
+        "strings": "字符串",
+        "selectSource": "选择翻译",
+        "selectTranslationDir": "选择翻译文件夹",
+        "filesAndEntries": "{{fileCount}} 个文件, {{entryCount}} 条",
+        "mergeOptions": "合并选项",
+        "replaceExisting": "替换已有字段",
+        "replaceExistingDesc": "将覆盖目标中已存在的 key",
+        "skipExistingDesc": "跳过目标中已存在的 key",
+        "importRules": "导入规则",
+        "showChangesOnly": "仅显示变更",
+        "showAll": "显示全部",
+        "exportJson": "导出 JSON",
+        "importJson": "导入 JSON",
+        "settings": "设置",
+        "newFile": "新建",
+        "merge": "开始导入",
+        "preview": "差异预览",
+        "mappings": "映射规则",
+        "step1": "选择项目目录",
+        "step2": "选择翻译文件目录",
+        "noProject": "首先选择 Android 项目目录",
+        "noSource": "然后选择包含翻译文件的目录",
+        "readyDesc": "配置映射关系后即可预览变更",
+        "refresh": "刷新文件",
+        "totalLocales": "{{count}} 个语言",
+        "added": "新增",
+        "updated": "更新",
+        "confirmImport": "确认导入",
+        "importSummary": "即将导入 {{localeCount}} 个语言 · +{{totalAdd}} 新增 · ~{{totalUpdate}} 更新",
+        "importComment": "导入说明（可选）",
+        "importCommentPlaceHolder": "点击此处输入备注",
+        "importCommentDesc": "这段说明将作为注释添加到导入条目之前",
+        "processing": "正在处理",
+        "importCompleted": "导入完成",
+        "confirm": "确认",
+        "cancel": "取消",
+        "importing": "导入中...",
+        "editImportRules": "编辑导入规则",
+        "resetAll": "全部重置",
+        "resetAllTitle": "恢复全部分配建议",
+        "resetOneTitle": "恢复建议值",
+        "target": "目标",
+        "saveConfig": "保存配置",
+        "noPreview": "选择左侧语言查看导入预览",
+        "noContent": "无内容",
+        "importPreview": "导入预览",
+        "clickToSwitchPath": "点击切换路径",
+        "prevChange": "上一个变更",
+        "nextChange": "下一个变更",
+        "noChangesDesc": "此语言无变更，以下是目标文件现有内容",
+        "mergeSuccess": "合并完成！迫不及待查看目标目录。",
+        "readTargetFailed": "读取目标资源失败",
+        "noResDirFound": "未在所选目录中找到 Android 资源目录 (src/main/res)",
+        "selectProjectFailed": "选择项目失败",
+        "selectSourceFailed": "选择目录失败",
+        "refreshFailed": "刷新文件失败",
+        "mergeFailed": "合并失败",
+        "notSupported": "浏览器不支持",
+        "notSupportedDesc": "File System Access API 仅支持 Chrome 和 Edge 浏览器。",
+        "startConfig": "开始配置",
+        "step1Desc": "首先选择 Android 项目目录",
+        "step2Desc": "然后选择包含翻译文件的目录",
+        "help": {
+            "workflow": "操作流程",
+            "step1": {
+                "bold": "选择项目",
+                "text": ": 指向 Android 工程根目录（自动识别模块）。"
+            },
+            "step2": {
+                "bold": "选择翻译",
+                "text": ": 选择包含翻译资源的文件夹（支持识别文件名中的 Locale）。"
+            },
+            "step3": {
+                "bold": "差异预览",
+                "text": ": 在预览列表切换，右侧实时查看 Diff。"
+            },
+            "step4": {
+                "bold": "安全导入",
+                "text": ": 点击“开始导入”，ResBeaver 将智能合并词条并直接写入磁盘。"
+            },
+            "advanced": {
+                "title": "🛠️ 进阶功能",
+                "mapping": {
+                    "bold": "映射规则",
+                    "text": ": 支持导出/导入 JSON 规则配置，方便在团队间同步 Locale 映射。"
+                },
+                "comments": {
+                    "bold": "注释保留",
+                    "text": ": 智能识别 XML 注释，合并时自动保留原始文档结构。"
+                },
+                "modules": {
+                    "bold": "模块支持",
+                    "text": ": 自动检测多 Module 项目，支持在不同模块间自由切换。"
+                }
+            }
+        }
+    }
+}

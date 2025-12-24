@@ -1,4 +1,5 @@
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -33,6 +34,8 @@ export function ImportConfirmationDialog({
     onConfirm,
     onConfirmCompletion
 }: ImportConfirmationDialogProps) {
+    const { t } = useTranslation()
+
     if (!open) return null
 
     return (
@@ -43,7 +46,7 @@ export function ImportConfirmationDialog({
             />
             <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
                 <div className="px-6 py-4 border-b flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">确认导入</h3>
+                    <h3 className="text-lg font-semibold">{t('string.confirmImport')}</h3>
                     <Button
                         variant="ghost"
                         size="icon"
@@ -55,18 +58,18 @@ export function ImportConfirmationDialog({
                 </div>
                 <div className="px-6 py-4 space-y-4">
                     <div className="text-sm text-muted-foreground">
-                        即将导入 {localeCount} 个语言 · +{totalAdd} 新增 · ~{totalUpdate} 更新
+                        {t('string.importSummary', { localeCount, totalAdd, totalUpdate })}
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="import-comment">导入说明（可选）</Label>
+                        <Label htmlFor="import-comment">{t('string.importComment')}</Label>
                         <Input
                             id="import-comment"
                             value={importComment}
                             onChange={(e) => onCommentChange(e.target.value)}
-                            placeholder={`Imported on ${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`}
+                            placeholder={t('string.importCommentPlaceHolder')}
                         />
                         <p className="text-xs text-muted-foreground">
-                            这段说明将作为注释添加到导入条目之前
+                            {t('string.importCommentDesc')}
                         </p>
                     </div>
 
@@ -75,14 +78,14 @@ export function ImportConfirmationDialog({
                             {importProgress.current < importProgress.total ? (
                                 <>
                                     <div className="flex items-center justify-between text-sm">
-                                        <span className="text-muted-foreground">正在处理: {importProgress.fileName}</span>
+                                        <span className="text-muted-foreground">{t('string.processing')}: {importProgress.fileName}</span>
                                         <span className="font-medium">{importProgress.current} / {importProgress.total}</span>
                                     </div>
                                     <Progress value={(importProgress.current / importProgress.total) * 100} />
                                 </>
                             ) : (
                                 <div className="flex items-center justify-center text-sm font-medium text-green-600 py-2">
-                                    ✓ 导入完成
+                                    ✓ {t('string.importCompleted')}
                                 </div>
                             )}
                         </div>
@@ -90,13 +93,13 @@ export function ImportConfirmationDialog({
                 </div>
                 <div className="px-6 py-4 border-t flex justify-end gap-2">
                     {!importCompleted && (
-                        <Button variant="outline" onClick={onClose} disabled={isImporting}>取消</Button>
+                        <Button variant="outline" onClick={onClose} disabled={isImporting}>{t('string.cancel')}</Button>
                     )}
                     {importCompleted ? (
-                        <Button onClick={onConfirmCompletion}>确认</Button>
+                        <Button onClick={onConfirmCompletion}>{t('string.confirm')}</Button>
                     ) : (
                         <Button onClick={() => onConfirm(importComment || undefined as unknown as string)} disabled={isImporting}>
-                            {isImporting ? '导入中...' : '确认导入'}
+                            {isImporting ? t('string.importing') : t('string.confirm')}
                         </Button>
                     )}
                 </div>
@@ -104,3 +107,4 @@ export function ImportConfirmationDialog({
         </div>
     )
 }
+

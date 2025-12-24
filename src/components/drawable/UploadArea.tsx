@@ -1,4 +1,5 @@
 import { Upload } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface UploadAreaProps {
     isDragging: boolean
@@ -19,6 +20,8 @@ export function UploadArea({
     inputRef,
     onFileSelect
 }: UploadAreaProps) {
+    const { t } = useTranslation()
+
     return (
         <>
             {/* Fullscreen Drag Overlay */}
@@ -30,8 +33,8 @@ export function UploadArea({
                 >
                     <div className="bg-white rounded-2xl shadow-2xl p-12 text-center border-2 border-dashed border-primary max-w-lg w-full">
                         <Upload className="h-16 w-16 mx-auto mb-4 text-primary animate-bounce" />
-                        <h2 className="text-2xl font-bold mb-2">松开鼠标上传</h2>
-                        <p className="text-muted-foreground">支持 PNG、JPG、WebP 格式</p>
+                        <h2 className="text-2xl font-bold mb-2">{t('drawable.dropToUpload')}</h2>
+                        <p className="text-muted-foreground">PNG, JPG, WebP</p>
                     </div>
                 </div>
             )}
@@ -50,9 +53,9 @@ export function UploadArea({
                 >
                     <Upload className={`h-10 w-10 mx-auto mb-3 transition-colors ${isDragging ? 'text-primary' : 'text-slate-400'}`} />
                     <h2 className="text-lg font-semibold mb-1">
-                        {isDragging ? '松开鼠标上传' : '拖拽图片到这里'}
+                        {isDragging ? t('drawable.dropToUpload') : t('drawable.uploadArea')}
                     </h2>
-                    <p className="text-sm text-muted-foreground">支持 PNG、JPG、WebP 格式</p>
+                    <p className="text-sm text-muted-foreground">{t('drawable.uploadBatch')} (PNG, JPG, WebP)</p>
                     <input
                         ref={inputRef}
                         type="file"
@@ -66,3 +69,4 @@ export function UploadArea({
         </>
     )
 }
+

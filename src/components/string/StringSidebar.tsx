@@ -1,5 +1,6 @@
 import { ChevronDown, FolderOpen, Search } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
@@ -34,6 +35,7 @@ export function StringSidebar({
     onLoadResDirectory,
     onReplaceExistingChange
 }: StringSidebarProps) {
+    const { t } = useTranslation()
     const [isOpen, setIsOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const containerRef = useRef<HTMLDivElement>(null)
@@ -63,7 +65,7 @@ export function StringSidebar({
                 {/* Project (Output) Section */}
                 <div>
                     <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                        项目
+                        {t('string.project')}
                     </h3>
                     <Button
                         variant="outline"
@@ -72,7 +74,7 @@ export function StringSidebar({
                     >
                         <FolderOpen className="h-4 w-4 shrink-0" />
                         <span className="truncate">
-                            {projectRootName || '选择 Android 项目'}
+                            {projectRootName || t('string.selectAndroidProject')}
                         </span>
                     </Button>
 
@@ -80,13 +82,13 @@ export function StringSidebar({
                     {discoveredResDirs.length > 1 && (
                         <div className="mt-4" ref={containerRef}>
                             <Label className="text-[11px] font-medium text-slate-500 mb-1.5 block uppercase tracking-wider">
-                                模块选择
+                                {t('string.moduleSelection')}
                             </Label>
                             <div className="relative group">
                                 <div className="relative">
                                     <Input
                                         ref={inputRef}
-                                        placeholder="搜索或选择模块..."
+                                        placeholder={t('string.searchOrSelectModule')}
                                         value={isOpen ? searchTerm : (selectedResDir?.name || '')}
                                         onChange={(e) => {
                                             setSearchTerm(e.target.value)
@@ -127,7 +129,7 @@ export function StringSidebar({
                                                 ))
                                             ) : (
                                                 <div className="px-3 py-2 text-[11px] text-slate-400 text-center">
-                                                    未找到匹配模块
+                                                    {t('string.noMatchingModule')}
                                                 </div>
                                             )}
                                         </div>
@@ -143,7 +145,7 @@ export function StringSidebar({
                 {/* Source (Input) Section */}
                 <div>
                     <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                        字符串
+                        {t('string.strings')}
                     </h3>
                     <Button
                         variant="outline"
@@ -152,13 +154,13 @@ export function StringSidebar({
                     >
                         <FolderOpen className="h-4 w-4 shrink-0" />
                         <span className="truncate">
-                            {sourceDirName || '选择翻译文件夹'}
+                            {sourceDirName || t('string.selectTranslationDir')}
                         </span>
                     </Button>
 
                     {sourceFileCount > 0 && (
                         <p className="text-xs text-muted-foreground mt-2">
-                            {sourceFileCount} 个文件, {totalSourceEntries} 条
+                            {t('string.filesAndEntries', { fileCount: sourceFileCount, entryCount: totalSourceEntries })}
                         </p>
                     )}
                 </div>
@@ -169,7 +171,7 @@ export function StringSidebar({
                         <div className="h-px bg-border" />
                         <div>
                             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                                合并选项
+                                {t('string.mergeOptions')}
                             </h3>
                             <div className="flex items-center gap-2">
                                 <Checkbox
@@ -182,11 +184,11 @@ export function StringSidebar({
                                     }}
                                 />
                                 <Label htmlFor="replace-existing" className="text-sm cursor-pointer">
-                                    替换已有字段
+                                    {t('string.replaceExisting')}
                                 </Label>
                             </div>
                             <p className="text-xs text-muted-foreground mt-1.5 ml-6">
-                                {replaceExisting ? '将覆盖目标中已存在的 key' : '跳过目标中已存在的 key'}
+                                {replaceExisting ? t('string.replaceExistingDesc') : t('string.skipExistingDesc')}
                             </p>
                         </div>
                     </>
@@ -195,3 +197,4 @@ export function StringSidebar({
         </aside>
     )
 }
+

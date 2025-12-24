@@ -1,5 +1,6 @@
 import { useRef, useEffect, forwardRef, useState } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { MergePreviewDetail, XmlDiffLine } from '@/types'
 
@@ -22,12 +23,6 @@ function highlightXml(content: string, baseColor: string): React.ReactNode {
     // Match XML string elements: <string name="key">value</string> or with other attributes
     // Captures: indent, <string, name="key", optional attrs, >, value, </string>, trailing
     const stringMatch = trimmedContent.match(/^(\s*)(<string\s+)(name=")([^"]+)("(?:\s+[^>]*)?)(>)(.*)(<\/string>)(.*)$/)
-
-    // DEBUG: Log for add lines (green background uses text-green-700)
-    if (baseColor === 'text-green-700' && content.includes('<string')) {
-        console.log('[DEBUG] Add line content:', JSON.stringify(content))
-        console.log('[DEBUG] Regex match result:', stringMatch ? 'MATCHED' : 'NO MATCH')
-    }
 
     if (stringMatch) {
         const [, indent, openTag, nameAttr, keyValue, attrsAndQuote, gt, textContent, closeTag, trailing] = stringMatch
@@ -79,6 +74,7 @@ export function DiffPreview({
     hasPrev = false,
     hasNext = false
 }: DiffPreviewProps) {
+    const { t } = useTranslation()
     const containerRef = useRef<HTMLDivElement>(null)
     const lineRefs = useRef<(HTMLDivElement | null)[]>([])
     const [showFullPath, setShowFullPath] = useState(false)
@@ -110,7 +106,7 @@ export function DiffPreview({
     if (!preview) {
         return (
             <div className="flex-1 flex items-center justify-center text-muted-foreground bg-slate-50 rounded-lg border border-dashed">
-                <p className="text-sm">选择左侧语言查看导入预览</p>
+                <p className="text-sm">{t('string.noPreview')}</p>
             </div>
         )
     }
@@ -118,7 +114,7 @@ export function DiffPreview({
     if (diffLines.length === 0) {
         return (
             <div className="flex-1 flex items-center justify-center text-muted-foreground bg-slate-50 rounded-lg border border-dashed">
-                <p className="text-sm">无内容</p>
+                <p className="text-sm">{t('string.noContent')}</p>
             </div>
         )
     }
@@ -129,9 +125,8 @@ export function DiffPreview({
     return (
         <div className="flex-1 overflow-hidden flex flex-col bg-white rounded-lg border">
             {/* Header */}
-            {/* Header */}
             <div className="px-4 py-2 border-b bg-slate-50 flex items-center h-10 gap-3">
-                <span className="text-sm font-medium flex-shrink-0">导入预览</span>
+                <span className="text-sm font-medium flex-shrink-0">{t('string.importPreview')}</span>
                 <span className="text-xs text-muted-foreground flex-shrink-0">|</span>
 
                 <div className="flex-1 min-w-0 flex items-center">
@@ -139,7 +134,7 @@ export function DiffPreview({
                         <span
                             className="text-sm font-mono text-slate-600 hover:text-primary cursor-pointer transition-colors bg-slate-100/50 px-2 py-0.5 rounded border border-transparent hover:border-slate-200 truncate block max-w-full"
                             onClick={() => setShowFullPath(!showFullPath)}
-                            title={showFullPath ? "点击切换短路径" : "点击切换全路径"}
+                            title={t('string.clickToSwitchPath')}
                         >
                             {showFullPath ? fullPath : shortPath}
                         </span>
@@ -153,7 +148,7 @@ export function DiffPreview({
                         className="h-7 w-7 p-0"
                         disabled={!hasPrev}
                         onClick={onNavigatePrev}
-                        title="上一个变更"
+                        title={t('string.prevChange')}
                     >
                         <ChevronUp className="h-4 w-4" />
                     </Button>
@@ -163,7 +158,7 @@ export function DiffPreview({
                         className="h-7 w-7 p-0"
                         disabled={!hasNext}
                         onClick={onNavigateNext}
-                        title="下一个变更"
+                        title={t('string.nextChange')}
                     >
                         <ChevronDown className="h-4 w-4" />
                     </Button>
@@ -174,7 +169,7 @@ export function DiffPreview({
             <div ref={containerRef} className="flex-1 overflow-y-auto font-mono text-xs">
                 {!hasChanges && (
                     <div className="px-4 py-2 bg-blue-50 text-blue-700 text-xs border-b font-sans">
-                        此语言无变更，以下是目标文件现有内容
+                        {t('string.noChangesDesc')}
                     </div>
                 )}
                 {(() => {

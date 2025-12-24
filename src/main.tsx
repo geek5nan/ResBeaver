@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import './lib/i18n' // Initialize i18n
 
 // Initialize Google Analytics if GA_ID is configured
 const GA_ID = import.meta.env.VITE_GA_ID

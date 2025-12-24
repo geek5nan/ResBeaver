@@ -1,4 +1,5 @@
 import { Trash2, Loader2, Pencil, Check, Download } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -24,11 +25,13 @@ export function FileList({
     onFinishEdit,
     onDownload
 }: FileListProps) {
+    const { t } = useTranslation()
+
     if (files.length === 0) {
         return (
             <div className="flex-1 overflow-y-auto px-6 pb-6">
                 <div className="h-full flex items-center justify-center text-muted-foreground">
-                    <p className="text-sm">暂无文件，请上传图片</p>
+                    <p className="text-sm">{t('drawable.noFiles')}</p>
                 </div>
             </div>
         )
@@ -80,7 +83,7 @@ export function FileList({
                                 </div>
                             )}
                             {file.status === 'ready' && downloadingId !== file.id && (
-                                <Badge variant="secondary" className="text-xs">待下载</Badge>
+                                <Badge variant="secondary" className="text-xs">{t('drawable.ready')}</Badge>
                             )}
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
@@ -99,3 +102,4 @@ export function FileList({
         </div>
     )
 }
+

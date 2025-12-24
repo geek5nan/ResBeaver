@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Slider } from '@/components/ui/slider'
@@ -23,6 +24,8 @@ function getRecommendedDensities(inputScale: number): string[] {
 }
 
 export function Sidebar({ config, onChange }: SidebarProps) {
+    const { t } = useTranslation()
+
     const handleDensityToggle = (key: string, checked: boolean) => {
         const newDensities = checked
             ? [...config.selectedDensities, key]
@@ -35,8 +38,8 @@ export function Sidebar({ config, onChange }: SidebarProps) {
         <aside className="w-[280px] border-r bg-white flex-shrink-0 overflow-y-auto">
             <div className="p-6 space-y-6">
                 <div>
-                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">输入</h3>
-                    <Label className="text-sm font-medium mb-3 block">输入图片倍数</Label>
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('drawable.input')}</h3>
+                    <Label className="text-sm font-medium mb-3 block">{t('drawable.inputScale')}</Label>
                     <RadioGroup
                         value={config.inputScale.toString()}
                         onValueChange={(value) => {
@@ -50,7 +53,6 @@ export function Sidebar({ config, onChange }: SidebarProps) {
                         }}
                         className="grid grid-cols-2 gap-2"
                     >
-                        {/* ... existing input scale section ... */}
                         {[
                             { value: '1', label: '1x', desc: 'mdpi' },
                             { value: '2', label: '2x', desc: 'xhdpi' },
@@ -84,8 +86,8 @@ export function Sidebar({ config, onChange }: SidebarProps) {
                 <div className="h-px bg-border" />
 
                 <div>
-                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">输出</h3>
-                    <Label className="text-sm font-medium mb-3 block">编码模式</Label>
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('drawable.output')}</h3>
+                    <Label className="text-sm font-medium mb-3 block">{t('drawable.encodingMode')}</Label>
                     <RadioGroup
                         value={config.lossless ? 'lossless' : 'lossy'}
                         onValueChange={(value) => {
@@ -98,15 +100,15 @@ export function Sidebar({ config, onChange }: SidebarProps) {
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="lossy" id="lossy" />
                             <Label htmlFor="lossy" className="text-sm cursor-pointer">
-                                Lossy (有损压缩)
-                                <span className="text-xs text-muted-foreground ml-2">文件更小</span>
+                                {t('drawable.lossy')}
+                                <span className="text-xs text-muted-foreground ml-2">{t('drawable.lossyDesc')}</span>
                             </Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="lossless" id="lossless" />
                             <Label htmlFor="lossless" className="text-sm cursor-pointer">
-                                Lossless (无损压缩)
-                                <span className="text-xs text-muted-foreground ml-2">保留原始质量</span>
+                                {t('drawable.lossless')}
+                                <span className="text-xs text-muted-foreground ml-2">{t('drawable.losslessDesc')}</span>
                             </Label>
                         </div>
                     </RadioGroup>
@@ -114,7 +116,7 @@ export function Sidebar({ config, onChange }: SidebarProps) {
 
                 <div>
                     <Label className="text-sm font-medium mb-3 block">
-                        {config.lossless ? '压缩力度' : 'WebP 质量'}
+                        {config.lossless ? t('drawable.compression') : t('drawable.quality')}
                     </Label>
                     <div className="flex items-center gap-3">
                         <Slider
@@ -141,13 +143,13 @@ export function Sidebar({ config, onChange }: SidebarProps) {
                     </div>
                     {config.lossless && (
                         <p className="text-xs text-muted-foreground mt-2">
-                            0 = 最快压缩，100 = 最小文件
+                            {t('drawable.compressionDesc')}
                         </p>
                     )}
                 </div>
 
                 <div>
-                    <Label className="text-sm font-medium mb-3 block">输出目录</Label>
+                    <Label className="text-sm font-medium mb-3 block">{t('drawable.outputDir')}</Label>
                     <div className="space-y-2">
                         <div className="pb-3 mb-3 border-b">
                             <div className="flex items-center space-x-2">
@@ -160,13 +162,13 @@ export function Sidebar({ config, onChange }: SidebarProps) {
                                     }}
                                 />
                                 <Label htmlFor="night-mode" className="text-sm cursor-pointer flex-1">
-                                    暗黑模式目录
+                                    {t('drawable.nightMode')}
                                     <span className="text-xs text-muted-foreground ml-2">(drawable-night-*)</span>
                                 </Label>
                             </div>
                             {config.nightMode && (
                                 <p className="text-[10px] text-muted-foreground mt-1 ml-6">
-                                    将会为所有选中的目录生成对应的 night 目录
+                                    {t('drawable.nightModeDesc')}
                                 </p>
                             )}
                         </div>
@@ -176,7 +178,7 @@ export function Sidebar({ config, onChange }: SidebarProps) {
                             { key: 'xhdpi', label: 'drawable-xhdpi', desc: '2x' },
                             { key: 'xxhdpi', label: 'drawable-xxhdpi', desc: '3x' },
                             { key: 'xxxhdpi', label: 'drawable-xxxhdpi', desc: '4x' },
-                            { key: 'drawable', label: 'drawable', desc: '通用' },
+                            { key: 'drawable', label: 'drawable', desc: t('drawable.universal') },
                         ].map(({ key, label, desc }) => (
                             <div key={key} className="flex items-center space-x-2">
                                 <Checkbox
@@ -196,3 +198,4 @@ export function Sidebar({ config, onChange }: SidebarProps) {
         </aside>
     )
 }
+
