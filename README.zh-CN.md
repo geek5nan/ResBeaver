@@ -10,9 +10,9 @@
 </p>
 
 <p align="center">
-  🌐 [在线体验](https://resbeaver.pages.dev) · 
-  📄 [项目上下文](./PROJECT_CONTEXT.md) ·
-  🇺🇸 [English Documentation](./README.md)
+  🌐 <a href="https://resbeaver.pages.dev">在线体验</a>
+  📄 <a href="./PROJECT_CONTEXT.md">项目上下文</a>
+  🇺🇸 <a href="./README.md"> English Documentation</a>
 </p>
 
 ---
