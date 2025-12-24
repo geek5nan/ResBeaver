@@ -11,7 +11,6 @@
 
 <p align="center">
   🌐 <a href="https://resbeaver.pages.dev">Online Demo</a>
-  📄 <a href="./PROJECT_CONTEXT.md">Project Context</a>
   🇨🇳 <a href="./README.zh-CN.md"> 中文文档</a>
 </p>
 
